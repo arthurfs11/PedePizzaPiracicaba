@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pede Pizza Piracicaba — Painel de Pedidos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <span class="header-logo">🍕</span>
+      <div>
+        <h1 class="header-title">Pede Pizza Piracicaba</h1>
+        <p class="header-sub">Painel de Pedidos em Tempo Real</p>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-pill stat-recebido">
+        <span class="stat-dot"></span>
+        <span id="stat-recebido">0</span> Recebidos
+      </div>
+      <div class="stat-pill stat-andamento">
+        <span class="stat-dot"></span>
+        <span id="stat-andamento">0</span> Em andamento
+      </div>
+      <div class="stat-pill stat-entrega">
+        <span class="stat-dot"></span>
+        <span id="stat-entrega">0</span> Em entrega
+      </div>
+      <div class="stat-pill stat-concluido">
+        <span class="stat-dot"></span>
+        <span id="stat-concluido">0</span> Concluídos
+      </div>
+      <div class="stat-pill stat-total">
+        💰 Hoje: <span id="stat-total">R$0,00</span>
+      </div>
+    </div>
+    <div class="header-time">
+      <button class="btn-refresh" onclick="recarregarTodos()" title="Recarregar pedidos">🔄</button>
+      <span id="clock"></span>
+    </div>
+  </header>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar" id="status-bar">
+    <span id="ws-status" class="ws-connecting">● Conectando...</span>
+  </div>
+
+  <!-- BOARD -->
+  <main class="board">
+    <!-- Coluna: Recebidos -->
+    <section class="column column-recebido">
+      <div class="column-header">
+        <span class="column-icon">🔔</span>
+        <h2 class="column-title">Recebidos</h2>
+        <span class="column-badge" id="badge-recebido">0</span>
+      </div>
+      <div class="column-body" id="col-recebido">
+        <div class="empty-state" id="empty-recebido">
+          <p>Nenhum pedido recebido</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Coluna: Em Andamento -->
+    <section class="column column-andamento">
+      <div class="column-header">
+        <span class="column-icon">🔥</span>
+        <h2 class="column-title">Em Andamento</h2>
+        <span class="column-badge" id="badge-andamento">0</span>
+      </div>
+      <div class="column-body" id="col-andamento">
+        <div class="empty-state" id="empty-andamento">
+          <p>Nenhum pedido em preparo</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Coluna: Em Entrega -->
+    <section class="column column-entrega">
+      <div class="column-header">
+        <span class="column-icon">🛵</span>
+        <h2 class="column-title">Em Entrega</h2>
+        <span class="column-badge" id="badge-entrega">0</span>
+      </div>
+      <div class="column-body" id="col-entrega">
+        <div class="empty-state" id="empty-entrega">
+          <p>Nenhum pedido saiu para entrega</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Coluna: Concluídos -->
+    <section class="column column-concluido">
+      <div class="column-header">
+        <span class="column-icon">✅</span>
+        <h2 class="column-title">Concluídos</h2>
+        <span class="column-badge" id="badge-concluido">0</span>
+      </div>
+      <div class="column-body" id="col-concluido">
+        <div class="empty-state" id="empty-concluido">
+          <p>Nenhum pedido concluído ainda</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- NOTIFICATION SOUND (silent audio to unlock AudioContext) -->
+  <audio id="notif-audio" preload="auto">
+    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbv4hCIyVGm9nbvJRjPDl0pfLlr3hIMi9Xj+fuvY9dRTU5Z5rg3ryXaE1CS3qm6uyyjFlHO0d4o+XvuIpbTD9HdrLs87qEV0k/S3u26fm0gVZLP0t6s/H6sX5VTD9OhMP5/LV7V1JHVZXJ/f61dlhOUV+gz/3/tXJaT1Rfqtj//7dvYFNbcL7m//+ze2RYYX3E7P//s3xoWmuP0vX//7F/bGF3m+H8//+ugnFpg6r3AACH" type="audio/wav" />
+  </audio>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
