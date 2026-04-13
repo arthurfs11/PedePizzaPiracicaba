@@ -1,0 +1,18 @@
+{
+  "name": "pede-pizza-bot",
+  "version": "1.0.0",
+  "description": "Bot Telegram para pedidos de pizza",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "telegraf": "^4.16.3",
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
