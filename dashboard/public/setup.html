@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pede Pizza — Configuração Inicial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+    }
+
+    .logo {
+      font-size: 3rem;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      text-align: center;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: .82rem;
+      color: #64748b;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .badge-setup {
+      display: block;
+      text-align: center;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #c2410c;
+      font-size: .75rem;
+      font-weight: 600;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 24px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      font-size: .78rem;
+      font-weight: 600;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .field input,
+    .field select {
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: .9rem;
+      font-family: inherit;
+      color: #1e293b;
+      transition: border-color .15s, box-shadow .15s;
+      background: #fff;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      outline: none;
+      border-color: #f97316;
+      box-shadow: 0 0 0 3px rgba(249,115,22,.12);
+    }
+
+    .btn {
+      width: 100%;
+      background: #f97316;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: .95rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn:hover    { opacity: .88; }
+    .btn:active   { transform: scale(.98); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .feedback {
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: .82rem;
+      font-weight: 500;
+      margin-top: 12px;
+      display: none;
+    }
+    .feedback-err { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+    .feedback-ok  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">🍕</div>
+    <h1 class="title">Pede Pizza Piracicaba</h1>
+    <p class="subtitle">Configuração Inicial do Sistema</p>
+    <span class="badge-setup">⚙️ Primeiro acesso — crie o administrador</span>
+
+    <div class="field">
+      <label>Nome completo <span style="color:#ef4444">*</span></label>
+      <input type="text" id="nome" placeholder="Ex: João Silva" autofocus autocomplete="name" />
+    </div>
+
+    <div class="field">
+      <label>Usuário (login) <span style="color:#ef4444">*</span></label>
+      <input type="text" id="usuario" placeholder="Ex: admin" autocomplete="username" />
+    </div>
+
+    <div class="field">
+      <label>Senha <span style="color:#ef4444">*</span></label>
+      <input type="password" id="senha" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+    </div>
+
+    <div class="field">
+      <label>Confirmar senha <span style="color:#ef4444">*</span></label>
+      <input type="password" id="confirmar" placeholder="Repita a senha" autocomplete="new-password" />
+    </div>
+
+    <button class="btn" id="btn-criar" onclick="criarAdmin()">Criar Administrador</button>
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <script>
+    async function criarAdmin() {
+      const nome     = document.getElementById('nome').value.trim();
+      const usuario  = document.getElementById('usuario').value.trim();
+      const senha    = document.getElementById('senha').value;
+      const confirmar= document.getElementById('confirmar').value;
+      const feedback = document.getElementById('feedback');
+      const btn      = document.getElementById('btn-criar');
+
+      feedback.style.display = 'none';
+
+      if (!nome || !usuario || !senha || !confirmar) {
+        feedback.className = 'feedback feedback-err';
+        feedback.textContent = '❌ Preencha todos os campos.';
+        feedback.style.display = 'block';
+        return;
+      }
+      if (senha.length < 6) {
+        feedback.className = 'feedback feedback-err';
+        feedback.textContent = '❌ A senha deve ter no mínimo 6 caracteres.';
+        feedback.style.display = 'block';
+        return;
+      }
+      if (senha !== confirmar) {
+        feedback.className = 'feedback feedback-err';
+        feedback.textContent = '❌ As senhas não coincidem.';
+        feedback.style.display = 'block';
+        return;
+      }
+
+      btn.textContent = 'Criando...';
+      btn.disabled    = true;
+
+      try {
+        const r = await fetch('/api/auth/setup', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ nome, usuario, senha }),
+        });
+        const data = await r.json();
+        if (r.ok) {
+          feedback.className = 'feedback feedback-ok';
+          feedback.textContent = '✅ Administrador criado! Redirecionando para o login...';
+          feedback.style.display = 'block';
+          setTimeout(() => { window.location.href = '/login'; }, 1500);
+        } else {
+          feedback.className = 'feedback feedback-err';
+          feedback.textContent = `❌ ${data.erro || 'Erro ao criar usuário.'}`;
+          feedback.style.display = 'block';
+          btn.textContent = 'Criar Administrador';
+          btn.disabled    = false;
+        }
+      } catch (e) {
+        feedback.className = 'feedback feedback-err';
+        feedback.textContent = '❌ Erro de conexão. Tente novamente.';
+        feedback.style.display = 'block';
+        btn.textContent = 'Criar Administrador';
+        btn.disabled    = false;
+      }
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') criarAdmin(); });
+  </script>
+</body>
+</html>

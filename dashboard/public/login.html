@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pede Pizza Piracicaba — Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+    }
+
+    .login-logo {
+      font-size: 3rem;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .login-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      text-align: center;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .login-sub {
+      font-size: .8rem;
+      color: #94a3b8;
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      font-size: .78rem;
+      font-weight: 600;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .field input {
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: .9rem;
+      font-family: inherit;
+      color: #1e293b;
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    .field input:focus {
+      outline: none;
+      border-color: #f97316;
+      box-shadow: 0 0 0 3px rgba(249,115,22,.12);
+    }
+
+    .btn-login {
+      width: 100%;
+      background: #f97316;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: .95rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn-login:hover    { opacity: .88; }
+    .btn-login:active   { transform: scale(.98); }
+    .btn-login:disabled { opacity: .5; cursor: not-allowed; }
+
+    .erro-box {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #dc2626;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: .82rem;
+      font-weight: 500;
+      margin-top: 12px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="login-logo">🍕</div>
+    <h1 class="login-title">Pede Pizza Piracicaba</h1>
+    <p class="login-sub">Painel de Pedidos em Tempo Real</p>
+
+    <div class="field">
+      <label>Usuário</label>
+      <input type="text" id="usuario" placeholder="admin" autofocus autocomplete="username" />
+    </div>
+
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+
+    <button class="btn-login" id="btn-entrar" onclick="entrar()">Entrar</button>
+    <div class="erro-box" id="erro-box"></div>
+  </div>
+
+  <script>
+    async function entrar() {
+      const usuario = document.getElementById('usuario').value.trim();
+      const senha   = document.getElementById('senha').value;
+      const erroEl  = document.getElementById('erro-box');
+      const btn     = document.getElementById('btn-entrar');
+
+      if (!usuario || !senha) {
+        erroEl.textContent = 'Preencha usuário e senha.';
+        erroEl.style.display = 'block';
+        return;
+      }
+
+      btn.textContent = 'Entrando...';
+      btn.disabled    = true;
+      erroEl.style.display = 'none';
+
+      try {
+        const r    = await fetch('/api/auth/login', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ usuario, senha }),
+        });
+        const data = await r.json();
+        if (r.ok) {
+          window.location.href = '/';
+        } else {
+          erroEl.textContent = data.erro || 'Erro desconhecido.';
+          erroEl.style.display = 'block';
+          btn.textContent = 'Entrar';
+          btn.disabled    = false;
+        }
+      } catch (e) {
+        erroEl.textContent = 'Erro de conexão. Verifique se o servidor está rodando.';
+        erroEl.style.display = 'block';
+        btn.textContent = 'Entrar';
+        btn.disabled    = false;
+      }
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
+  </script>
+</body>
+</html>

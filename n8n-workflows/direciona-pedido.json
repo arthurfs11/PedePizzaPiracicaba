@@ -23,7 +23,10 @@
         "contentType": "json",
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.body) }}",
-        "options": {}
+        "options": {
+          "timeout": 10000
+        },
+        "onError": "continueErrorOutput"
       },
       "id": "a1b2c3d4-0002-4000-8000-000000000002",
       "name": "Enviar para Dashboard",
@@ -34,14 +37,27 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { \"status\": \"ok\", \"numero\": $json.numero, \"mensagem\": \"Pedido direcionado com sucesso\" } }}",
+        "responseBody": "={{ { \"status\": \"ok\", \"numero\": $json.numero, \"mensagem\": \"Pedido registrado com sucesso\" } }}",
         "options": {}
       },
       "id": "a1b2c3d4-0003-4000-8000-000000000003",
-      "name": "Responder ao Bot",
+      "name": "Responder Sucesso",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [680, 300]
+      "position": [700, 180]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseCode": 500,
+        "responseBody": "={{ { \"status\": \"erro\", \"numero\": \"N/A\", \"mensagem\": \"Falha ao registrar o pedido. Tente novamente em instantes.\" } }}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Responder Erro",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [700, 420]
     }
   ],
   "connections": {
@@ -60,7 +76,14 @@
       "main": [
         [
           {
-            "node": "Responder ao Bot",
+            "node": "Responder Sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder Erro",
             "type": "main",
             "index": 0
           }
@@ -72,7 +95,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "a1b2c3d4-ffff-4000-8000-000000000000",
+  "versionId": "a1b2c3d4-ffff-4000-8000-000000000001",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "pede-pizza-piracicaba"
