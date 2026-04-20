@@ -1,0 +1,27 @@
+# Dependências
+node_modules/
+*/node_modules/
+
+# Variáveis de ambiente
+.env
+
+# Banco de dados
+*.db
+*.db-shm
+*.db-wal
+
+# Docker volumes
+n8n_data/
+pizza_db/
+
+# Logs
+*.log
+logs/
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

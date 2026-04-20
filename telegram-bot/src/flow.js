@@ -1,8 +1,9 @@
 const axios = require('axios');
-const { PIZZAS, TAMANHOS, ACOMPANHAMENTOS } = require('./menu');
+const { PIZZAS, TAMANHOS, ACOMPANHAMENTOS, BORDAS } = require('./menu');
 const {
   kbTipoPizza, kbTamanho, kbQuantidadeSabores, kbSabores,
   kbAcompanhamento, kbMaisPizza, kbConfirmar, kbPagamento, kbIniciar,
+  kbBorda, kbBordaSabor,
 } = require('./keyboards');
 const { getSession, setSession, clearSession } = require('./session');
 const { gerarPixCopiaECola } = require('./pix');
@@ -25,22 +26,24 @@ function novaPizzaAtual() {
 }
 
 function calcularTotal(sessao) {
-  const pizzas    = (sessao.pizzas || []).reduce((acc, p) => acc + (p.tamanho?.preco || 0), 0);
-  const acomp     = sessao.acompanhamento?.preco || 0;
+  const pizzas = (sessao.pizzas || []).reduce((acc, p) => acc + (p.tamanho?.preco || 0) + (p.borda?.preco || 0), 0);
+  const acomp  = sessao.acompanhamento?.preco || 0;
   return pizzas + acomp;
 }
 
 function formatarResumo(sessao) {
   const linhas = [];
   linhas.push(`👤 *Nome:* ${sessao.nome}`);
+  if (sessao.telefone) linhas.push(`📱 *Telefone:* ${sessao.telefone}`);
   linhas.push(`📍 *Endereço:* ${sessao.endereco}`);
   linhas.push('');
 
   (sessao.pizzas || []).forEach((p, i) => {
-    const tipo      = p.tipo === 'salgada' ? '🧀' : '🍓';
-    const sabores   = p.sabores.map((s) => s.nome).join(' / ');
-    const preco     = (p.tamanho?.preco || 0).toFixed(2);
-    linhas.push(`🍕 *Pizza ${i + 1}:* ${tipo} ${p.tamanho?.nome} — ${sabores} — *R$${preco}*`);
+    const tipo    = p.tipo === 'salgada' ? '🧀' : '🍓';
+    const sabores = p.sabores.map((s) => s.nome).join(' / ');
+    const preco   = ((p.tamanho?.preco || 0) + (p.borda?.preco || 0)).toFixed(2);
+    const borda   = p.borda ? ` + Borda ${p.borda.nome}` : '';
+    linhas.push(`🍕 *Pizza ${i + 1}:* ${tipo} ${p.tamanho?.nome} — ${sabores}${borda} — *R$${preco}*`);
   });
 
   if (sessao.acompanhamento?.preco > 0) {
@@ -59,6 +62,7 @@ async function enviarPedidoParaN8n(sessao, chatId) {
   const total = calcularTotal(sessao);
   const payload = {
     nome:            sessao.nome,
+    telefone:        sessao.telefone  || null,
     endereco:        sessao.endereco,
     pizzas:          sessao.pizzas,
     acompanhamento:  sessao.acompanhamento || null,
@@ -77,6 +81,7 @@ async function enviarMensagemDeEstado(ctx, sessao) {
   const msgs = {
     idle:                  () => ctx.reply('Olá! Use /start para iniciar um pedido. 🍕'),
     waiting_name:          () => ctx.reply('Por favor, me diga seu *nome* para continuar:', { parse_mode: 'Markdown' }),
+    waiting_phone:         () => ctx.reply('Qual é o seu *número de celular* com DDD? (ex: 19 91234-5678)', { parse_mode: 'Markdown' }),
     waiting_address:       () => ctx.reply('Me diga seu *endereço de entrega*:', { parse_mode: 'Markdown' }),
     choosing_type:         () => ctx.reply('*Que tipo de pizza você deseja?*', { parse_mode: 'Markdown', reply_markup: kbTipoPizza() }),
     choosing_size:         () => ctx.reply('*Qual tamanho?*', { parse_mode: 'Markdown', reply_markup: kbTamanho() }),
@@ -84,6 +89,8 @@ async function enviarMensagemDeEstado(ctx, sessao) {
     choosing_flavor1:      () => ctx.reply('*Escolha o sabor:*', { parse_mode: 'Markdown', reply_markup: kbSabores(sessao.pizzaAtual?.tipo) }),
     choosing_flavor2:      () => ctx.reply('*Escolha o 2º sabor:*', { parse_mode: 'Markdown', reply_markup: kbSabores(sessao.pizzaAtual?.tipo, sessao.pizzaAtual?.sabores[0]?.id) }),
     asking_more_pizza:     () => ctx.reply('*Deseja adicionar mais uma pizza?*', { parse_mode: 'Markdown', reply_markup: kbMaisPizza() }),
+    choosing_crust:         () => ctx.reply('*Quer borda recheada nessa pizza?*', { parse_mode: 'Markdown', reply_markup: kbBorda() }),
+    choosing_crust_sabor:   () => ctx.reply('*Qual sabor de borda?*', { parse_mode: 'Markdown', reply_markup: kbBordaSabor() }),
     choosing_accompaniment:() => ctx.reply('*Deseja algum acompanhamento?*', { parse_mode: 'Markdown', reply_markup: kbAcompanhamento() }),
     confirming:            () => ctx.reply(`*Resumo do pedido:*\n\n${formatarResumo(sessao)}\n\n_Confirma?_`, { parse_mode: 'Markdown', reply_markup: kbConfirmar() }),
     choosing_payment:      () => ctx.reply(`💰 *Total: R$${calcularTotal(sessao).toFixed(2)}*\n\n*Como deseja pagar?*`, { parse_mode: 'Markdown', reply_markup: kbPagamento() }),
@@ -101,9 +108,22 @@ async function handleText(ctx) {
 
   if (sessao.step === 'waiting_name') {
     sessao.nome = texto;
-    sessao.step = 'waiting_address';
+    sessao.step = 'waiting_phone';
     setSession(chatId, sessao);
-    await ctx.reply(`Oi, *${texto}*! 😊\n\nAgora me diga o seu *endereço de entrega* (rua, número, bairro):`, { parse_mode: 'Markdown' });
+    await ctx.reply(`Oi, *${texto}*! 😊\n\nQual é o seu *número de celular com DDD* para contato? (ex: 19 91234-5678)`, { parse_mode: 'Markdown' });
+    return;
+  }
+
+  if (sessao.step === 'waiting_phone') {
+    const digits = texto.replace(/\D/g, '');
+    if (digits.length < 10 || digits.length > 11) {
+      await ctx.reply('📱 Por favor, informe um número válido com DDD (10 ou 11 dígitos).\n\nExemplo: *19 91234-5678*', { parse_mode: 'Markdown' });
+      return;
+    }
+    sessao.telefone = texto;
+    sessao.step     = 'waiting_address';
+    setSession(chatId, sessao);
+    await ctx.reply('Perfeito! 📍 Agora me diga o seu *endereço de entrega* (rua, número, bairro):', { parse_mode: 'Markdown' });
     return;
   }
 
@@ -136,6 +156,7 @@ async function handleCallback(ctx) {
     setSession(chatId, {
       step:           'waiting_name',
       pizzas:         [],
+      telefone:       null,
       acompanhamento: null,
       pagamento:      null,
       pizzaAtual:     null,
@@ -196,16 +217,68 @@ async function handleCallback(ctx) {
       return;
     }
 
-    // Pizza completa → salva e pergunta se quer mais
+    // Pizza completa → se salgada, pergunta sobre borda; se doce, pergunta mais pizza
+    if (sessao.pizzaAtual.tipo === 'salgada') {
+      sessao.step = 'choosing_crust';
+      setSession(chatId, sessao);
+      const saboresStr = sessao.pizzaAtual.sabores.map((s) => s.nome).join(' / ');
+      await ctx.reply(
+        `*${saboresStr}* ✅\n\n🍕 Sabor(es) selecionado(s)!\n\n*Deseja borda recheada nessa pizza?* (+R$6,00)`,
+        { parse_mode: 'Markdown', reply_markup: kbBorda() }
+      );
+    } else {
+      sessao.pizzaAtual.borda = null;
+      sessao.pizzas.push({ ...sessao.pizzaAtual });
+      const numPizzas = sessao.pizzas.length;
+      sessao.step = 'asking_more_pizza';
+      sessao.pizzaAtual = novaPizzaAtual();
+      setSession(chatId, sessao);
+      const saboresStr = sessao.pizzas[numPizzas - 1].sabores.map((s) => s.nome).join(' / ');
+      await ctx.reply(
+        `*${saboresStr}* ✅\n\n🍕 *Pizza ${numPizzas}* adicionada ao pedido!\n\n*Deseja adicionar mais uma pizza?*`,
+        { parse_mode: 'Markdown', reply_markup: kbMaisPizza() }
+      );
+    }
+    return;
+  }
+
+  // ── Borda (sim/não) ───────────────────────────────────────
+  if (data === 'bd_y' || data === 'bd_n') {
+    if (sessao.step !== 'choosing_crust') return;
+    if (data === 'bd_n') {
+      sessao.pizzaAtual.borda = null;
+      sessao.pizzas.push({ ...sessao.pizzaAtual });
+      const numPizzas = sessao.pizzas.length;
+      sessao.step = 'asking_more_pizza';
+      sessao.pizzaAtual = novaPizzaAtual();
+      setSession(chatId, sessao);
+      const saboresStr = sessao.pizzas[numPizzas - 1].sabores.map((s) => s.nome).join(' / ');
+      await ctx.reply(
+        `Sem borda. ✅\n\n🍕 *Pizza ${numPizzas}* adicionada ao pedido!\n\n*Deseja adicionar mais uma pizza?*`,
+        { parse_mode: 'Markdown', reply_markup: kbMaisPizza() }
+      );
+    } else {
+      sessao.step = 'choosing_crust_sabor';
+      setSession(chatId, sessao);
+      await ctx.reply('*Qual sabor de borda você prefere?*', { parse_mode: 'Markdown', reply_markup: kbBordaSabor() });
+    }
+    return;
+  }
+
+  // ── Sabor da borda ────────────────────────────────────────
+  if (data.startsWith('bds_')) {
+    if (sessao.step !== 'choosing_crust_sabor') return;
+    const id    = data.replace('bds_', '');
+    const borda = BORDAS.find((b) => b.id === id);
+    sessao.pizzaAtual.borda = borda;
     sessao.pizzas.push({ ...sessao.pizzaAtual });
     const numPizzas = sessao.pizzas.length;
     sessao.step = 'asking_more_pizza';
     sessao.pizzaAtual = novaPizzaAtual();
     setSession(chatId, sessao);
-
     const saboresStr = sessao.pizzas[numPizzas - 1].sabores.map((s) => s.nome).join(' / ');
     await ctx.reply(
-      `*${saboresStr}* ✅\n\n🍕 *Pizza ${numPizzas}* adicionada ao pedido!\n\n*Deseja adicionar mais uma pizza?*`,
+      `Borda de *${borda.nome}* selecionada! 🤤\n\n🍕 *Pizza ${numPizzas}* adicionada ao pedido!\n\n*Deseja adicionar mais uma pizza?*`,
       { parse_mode: 'Markdown', reply_markup: kbMaisPizza() }
     );
     return;

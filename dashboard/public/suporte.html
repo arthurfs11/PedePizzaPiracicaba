@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pede Pizza — Suporte</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <span class="header-logo">🍕</span>
+      <div>
+        <h1 class="header-title">Pede Pizza Piracicaba</h1>
+        <p class="header-sub">Central de Suporte</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a href="/"           class="nav-link">📋 Pedidos</a>
+    <a href="/relatorios" class="nav-link">📊 Relatórios</a>
+    <a href="/suporte"    class="nav-link active">🎧 Suporte</a>
+    <a href="/usuarios"   class="nav-link" id="nav-admin" style="display:none">👥 Usuários</a>
+    <button onclick="fazerLogout()" class="nav-logout">Sair</button>
+  </nav>
+
+  <!-- CONTENT -->
+  <main class="page-content">
+    <h2 class="page-title">🎧 Abrir Chamado de Suporte</h2>
+    <p style="color:#64748b;margin-bottom:24px;font-size:.9rem">
+      Preencha o formulário abaixo. Nossa equipe entrará em contato pelo e-mail informado.
+    </p>
+
+    <div class="form-card">
+      <div class="form-row">
+        <div class="form-field">
+          <label>Nome <span class="req">*</span></label>
+          <input type="text" id="nome" placeholder="Seu nome completo" />
+        </div>
+        <div class="form-field">
+          <label>E-mail para retorno <span class="req">*</span></label>
+          <input type="email" id="email" placeholder="seu@email.com" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Prioridade <span class="req">*</span></label>
+          <select id="prioridade">
+            <option value="baixa">🟢 Baixa — dúvida ou sugestão</option>
+            <option value="media" selected>🟡 Média — algo não está funcionando</option>
+            <option value="alta">🔴 Alta — sistema parado</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Assunto <span class="req">*</span></label>
+          <input type="text" id="assunto" placeholder="Resumo do problema" />
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label>Descrição detalhada <span class="req">*</span></label>
+        <textarea id="descricao" placeholder="Descreva o problema com o máximo de detalhes possível. Se houver mensagem de erro, inclua aqui."></textarea>
+      </div>
+
+      <button class="btn-enviar" id="btn-enviar" onclick="enviarChamado()">Enviar Chamado</button>
+
+      <div class="feedback-box" id="feedback"></div>
+    </div>
+
+    <div style="margin-top:32px;padding:16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;font-size:.82rem;color:#64748b;max-width:640px">
+      <strong style="color:#1e293b">📌 Atendimento</strong><br><br>
+      Respondemos por e-mail em até 24 horas úteis. Para situações urgentes, entre em contato diretamente com o suporte técnico.
+    </div>
+
+    <!-- Histórico de chamados -->
+    <div style="margin-top:40px;max-width:900px">
+      <h3 style="font-size:1rem;font-weight:700;color:#1e293b;margin-bottom:14px">📂 Histórico de Chamados</h3>
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow-x:auto">
+        <table id="tabela-chamados" style="width:100%;border-collapse:collapse;font-size:.82rem">
+          <thead>
+            <tr style="background:#f8fafc">
+              <th style="padding:10px 14px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">#</th>
+              <th style="padding:10px 14px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">Data</th>
+              <th style="padding:10px 14px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">Nome</th>
+              <th style="padding:10px 14px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">Assunto</th>
+              <th style="padding:10px 14px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">Prioridade</th>
+              <th style="padding:10px 14px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">E-mail</th>
+            </tr>
+          </thead>
+          <tbody id="lista-chamados">
+            <tr><td colspan="6" style="padding:32px;text-align:center;color:#94a3b8">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    async function fazerLogout() {
+      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      window.location.href = '/login';
+    }
+
+    // Revelar link de admin e esconder itens do nav para contábil
+    fetch('/api/auth/me').then(r => r.json()).then(me => {
+      if (me?.papel === 'admin') {
+        const el = document.getElementById('nav-admin');
+        if (el) el.style.display = '';
+      }
+    }).catch(() => {});
+
+    carregarChamados();
+
+    async function carregarChamados() {
+      const r = await fetch('/api/suporte/chamados').catch(() => null);
+      if (!r || !r.ok) return;
+      const lista = await r.json();
+      const tbody = document.getElementById('lista-chamados');
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="padding:32px;text-align:center;color:#94a3b8">Nenhum chamado registrado ainda.</td></tr>';
+        return;
+      }
+      const prioLabel = { alta: '<span style="color:#dc2626;font-weight:700">🔴 Alta</span>', media: '<span style="color:#d97706;font-weight:700">🟡 Média</span>', baixa: '<span style="color:#16a34a;font-weight:700">🟢 Baixa</span>' };
+      const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      tbody.innerHTML = lista.map(c => {
+        const data = String(c.criado_em||'').replace('T',' ').substring(0,16);
+        const emailBadge = c.email_enviado
+          ? '<span style="color:#16a34a;font-size:.72rem">✅ Enviado</span>'
+          : '<span style="color:#94a3b8;font-size:.72rem">📋 Registrado</span>';
+        return `<tr style="border-bottom:1px solid #f1f5f9">
+          <td style="padding:10px 14px;color:#64748b">#${c.id}</td>
+          <td style="padding:10px 14px;white-space:nowrap;color:#64748b">${esc(data)}</td>
+          <td style="padding:10px 14px;font-weight:600">${esc(c.nome)}</td>
+          <td style="padding:10px 14px">${esc(c.assunto)}</td>
+          <td style="padding:10px 14px">${prioLabel[c.prioridade] || prioLabel.media}</td>
+          <td style="padding:10px 14px">${emailBadge}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function enviarChamado() {
+      const nome      = document.getElementById('nome').value.trim();
+      const email     = document.getElementById('email').value.trim();
+      const prioridade= document.getElementById('prioridade').value;
+      const assunto   = document.getElementById('assunto').value.trim();
+      const descricao = document.getElementById('descricao').value.trim();
+      const feedback  = document.getElementById('feedback');
+      const btn       = document.getElementById('btn-enviar');
+
+      feedback.style.display = 'none';
+
+      if (!nome || !email || !assunto || !descricao) {
+        feedback.className   = 'feedback-box feedback-err';
+        feedback.textContent = '❌ Preencha todos os campos obrigatórios.';
+        feedback.style.display = 'block';
+        return;
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        feedback.className   = 'feedback-box feedback-err';
+        feedback.textContent = '❌ Informe um e-mail válido.';
+        feedback.style.display = 'block';
+        return;
+      }
+
+      btn.textContent = 'Enviando...';
+      btn.disabled    = true;
+
+      try {
+        const r = await fetch('/api/suporte/chamado', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ nome, email, prioridade, assunto, descricao }),
+        });
+        if (r.status === 401) { window.location.href = '/login'; return; }
+        const data = await r.json();
+
+        if (r.ok) {
+          feedback.className   = 'feedback-box feedback-ok';
+          feedback.textContent = `✅ ${data.mensagem}`;
+          feedback.style.display = 'block';
+          // Limpar formulário
+          ['nome','email','assunto','descricao'].forEach(id => document.getElementById(id).value = '');
+          document.getElementById('prioridade').value = 'media';
+          carregarChamados();
+        } else {
+          feedback.className   = 'feedback-box feedback-err';
+          feedback.textContent = `❌ ${data.erro || 'Erro ao enviar chamado.'}`;
+          feedback.style.display = 'block';
+        }
+      } catch (e) {
+        feedback.className   = 'feedback-box feedback-err';
+        feedback.textContent = '❌ Erro de conexão. Tente novamente.';
+        feedback.style.display = 'block';
+      } finally {
+        btn.textContent = 'Enviar Chamado';
+        btn.disabled    = false;
+      }
+    }
+  </script>
+</body>
+</html>

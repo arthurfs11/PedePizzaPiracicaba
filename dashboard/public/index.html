@@ -46,6 +46,15 @@
     </div>
   </header>
 
+  <!-- NAV -->
+  <nav class="nav">
+    <a href="/"           class="nav-link active">📋 Pedidos</a>
+    <a href="/relatorios" class="nav-link">📊 Relatórios</a>
+    <a href="/suporte"    class="nav-link">🎧 Suporte</a>
+    <a href="/usuarios"   class="nav-link" id="nav-admin" style="display:none">👥 Usuários</a>
+    <button onclick="fazerLogout()" class="nav-logout">Sair</button>
+  </nav>
+
   <!-- STATUS BAR -->
   <div class="status-bar" id="status-bar">
     <span id="ws-status" class="ws-connecting">● Conectando...</span>

@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pede Pizza — Usuários</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .link-box {
+      background: #fff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 28px;
+      max-width: 740px;
+    }
+    .link-box-title {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #64748b;
+      margin-bottom: 10px;
+    }
+    .link-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .link-url {
+      flex: 1;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: .88rem;
+      font-family: 'Courier New', monospace;
+      color: #0f172a;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .btn-copy {
+      background: #f97316;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: .85rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: opacity .15s;
+    }
+    .btn-copy:hover { opacity: .85; }
+    .link-hint {
+      font-size: .78rem;
+      color: #94a3b8;
+      margin-top: 8px;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 14px;
+    }
+
+    /* Tabela de usuários */
+    .users-table-wrap {
+      overflow-x: auto;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      margin-bottom: 28px;
+      max-width: 740px;
+    }
+    .users-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+    }
+    .users-table th {
+      background: #f8fafc;
+      padding: 10px 14px;
+      text-align: left;
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: #64748b;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .users-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #1e293b;
+      vertical-align: middle;
+    }
+    .users-table tr:last-child td { border-bottom: none; }
+
+    .badge-papel {
+      display: inline-block;
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: .72rem;
+      font-weight: 700;
+    }
+    .badge-admin    { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+    .badge-operador { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+    .badge-contabil { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+    .badge-ativo    { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+    .badge-inativo  { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+    .btn-action {
+      border: none;
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: .75rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity .15s;
+      margin-right: 4px;
+    }
+    .btn-action:hover   { opacity: .75; }
+    .btn-edit           { background: #dbeafe; color: #1d4ed8; }
+    .btn-toggle-ativo   { background: #fef9c3; color: #854d0e; }
+    .btn-delete         { background: #fee2e2; color: #b91c1c; }
+
+    /* Formulário de novo usuário */
+    .novo-form {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 740px;
+    }
+    .novo-form .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 540px) {
+      .novo-form .form-row { grid-template-columns: 1fr; }
+    }
+
+    /* Modal de edição */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #fff;
+      border-radius: 14px;
+      padding: 28px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    }
+    .modal-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 18px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+    .btn-modal-cancel {
+      background: #f1f5f9;
+      color: #475569;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: .85rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .btn-modal-salvar {
+      background: #f97316;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: .85rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .btn-modal-salvar:hover  { opacity: .88; }
+    .btn-modal-cancel:hover  { background: #e2e8f0; }
+
+    .feedback-inline {
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: .8rem;
+      font-weight: 500;
+      margin-top: 10px;
+      display: none;
+    }
+    .fi-err { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+    .fi-ok  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <span class="header-logo">🍕</span>
+      <div>
+        <h1 class="header-title">Pede Pizza Piracicaba</h1>
+        <p class="header-sub">Gerenciamento de Usuários</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a href="/"           class="nav-link">📋 Pedidos</a>
+    <a href="/relatorios" class="nav-link">📊 Relatórios</a>
+    <a href="/suporte"    class="nav-link">🎧 Suporte</a>
+    <a href="/usuarios"   class="nav-link active" id="nav-admin">👥 Usuários</a>
+    <button onclick="fazerLogout()" class="nav-logout">Sair</button>
+  </nav>
+
+  <!-- CONTENT -->
+  <main class="page-content">
+    <h2 class="page-title">👥 Gerenciamento de Usuários</h2>
+
+    <!-- Link de acesso -->
+    <div class="link-box">
+      <div class="link-box-title">🔑 Link de acesso privado do sistema</div>
+      <div class="link-row">
+        <span class="link-url" id="link-url">Carregando...</span>
+        <button class="btn-copy" onclick="copiarLink()">📋 Copiar</button>
+      </div>
+      <p class="link-hint">Compartilhe este link apenas com os usuários autorizados do seu estabelecimento. Ele é único e privado.</p>
+    </div>
+
+    <!-- Lista de usuários -->
+    <div class="section-title">Usuários cadastrados</div>
+    <div class="users-table-wrap">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Usuário</th>
+            <th>Papel</th>
+            <th>Status</th>
+            <th>Criado em</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-usuarios">
+          <tr><td colspan="6" class="table-empty">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Formulário novo usuário -->
+    <div class="section-title">Adicionar novo usuário</div>
+    <div class="novo-form">
+      <div class="form-row">
+        <div class="form-field">
+          <label>Nome completo <span class="req">*</span></label>
+          <input type="text" id="n-nome" placeholder="Ex: Maria Silva" />
+        </div>
+        <div class="form-field">
+          <label>Usuário (login) <span class="req">*</span></label>
+          <input type="text" id="n-usuario" placeholder="Ex: maria" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Senha <span class="req">*</span></label>
+          <input type="password" id="n-senha" placeholder="Mínimo 6 caracteres" />
+        </div>
+        <div class="form-field">
+          <label>Papel <span class="req">*</span></label>
+          <select id="n-papel">
+            <option value="operador">Operador — visualiza e move pedidos</option>
+            <option value="admin">Administrador — acesso total</option>
+            <option value="contabil">Contábil — acesso apenas aos relatórios</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-enviar" id="btn-novo" onclick="criarUsuario()">➕ Adicionar Usuário</button>
+      <div class="feedback-inline" id="fi-novo"></div>
+    </div>
+  </main>
+
+  <!-- Modal edição -->
+  <div class="modal-overlay" id="modal-edicao">
+    <div class="modal-box">
+      <div class="modal-title">✏️ Editar Usuário</div>
+      <input type="hidden" id="edit-id" />
+      <div class="form-field" style="margin-bottom:12px">
+        <label>Nome completo</label>
+        <input type="text" id="edit-nome" />
+      </div>
+      <div class="form-field" style="margin-bottom:12px">
+        <label>Nova senha <span style="color:#94a3b8;font-weight:400">(deixe vazio para não alterar)</span></label>
+        <input type="password" id="edit-senha" placeholder="Nova senha" />
+      </div>
+      <div class="form-field" style="margin-bottom:12px">
+        <label>Papel</label>
+        <select id="edit-papel">
+          <option value="operador">Operador</option>
+          <option value="admin">Administrador</option>
+          <option value="contabil">Contábil</option>
+        </select>
+      </div>
+      <div class="feedback-inline" id="fi-edit"></div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="fecharModal()">Cancelar</button>
+        <button class="btn-modal-salvar" onclick="salvarEdicao()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let meId = null;
+
+    async function fazerLogout() {
+      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      window.location.href = '/login';
+    }
+
+    function fmtData(str) {
+      try {
+        const d = new Date(String(str || '').replace(' ', 'T'));
+        return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+      } catch(_) { return str || '—'; }
+    }
+
+    async function carregarLink() {
+      const r = await fetch('/api/link').catch(() => null);
+      if (!r || !r.ok) { document.getElementById('link-url').textContent = 'Erro ao carregar'; return; }
+      const { link } = await r.json();
+      document.getElementById('link-url').textContent = link;
+    }
+
+    async function copiarLink() {
+      const txt = document.getElementById('link-url').textContent;
+      try {
+        await navigator.clipboard.writeText(txt);
+        const btn = document.querySelector('.btn-copy');
+        btn.textContent = '✅ Copiado!';
+        setTimeout(() => { btn.textContent = '📋 Copiar'; }, 2000);
+      } catch(_) { alert('Copie manualmente: ' + txt); }
+    }
+
+    async function carregarUsuarios() {
+      const r = await fetch('/api/usuarios').catch(() => null);
+      if (!r) { return; }
+      if (r.status === 401) { window.location.href = '/login'; return; }
+      if (r.status === 403) { window.location.href = '/'; return; }
+      const users = await r.json();
+      renderizarUsuarios(users);
+    }
+
+    function renderizarUsuarios(users) {
+      const tbody = document.getElementById('tabela-usuarios');
+      if (!users.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="table-empty">Nenhum usuário cadastrado.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = users.map(u => {
+        const papelBadge  = u.papel === 'admin'
+          ? '<span class="badge-papel badge-admin">Admin</span>'
+          : u.papel === 'contabil'
+          ? '<span class="badge-papel badge-contabil">Contábil</span>'
+          : '<span class="badge-papel badge-operador">Operador</span>';
+        const ativoBadge  = u.ativo
+          ? '<span class="badge-papel badge-ativo">Ativo</span>'
+          : '<span class="badge-papel badge-inativo">Inativo</span>';
+        const isSelf = u.id === meId;
+        const toggleLabel = u.ativo ? 'Desativar' : 'Ativar';
+        const toggleTitle = isSelf ? 'Não é possível desativar o próprio usuário' : '';
+        return `<tr>
+          <td><strong>${escH(u.nome)}</strong>${isSelf ? ' <span style="color:#94a3b8;font-size:.72rem">(você)</span>' : ''}</td>
+          <td style="font-family:monospace">${escH(u.usuario)}</td>
+          <td>${papelBadge}</td>
+          <td>${ativoBadge}</td>
+          <td>${fmtData(u.criado_em)}</td>
+          <td>
+            <button class="btn-action btn-edit" onclick="abrirModal(${u.id},'${escH(u.nome)}','${escH(u.papel)}')">✏️ Editar</button>
+            <button class="btn-action btn-toggle-ativo" onclick="toggleAtivo(${u.id},${u.ativo})" ${isSelf ? 'disabled title="'+toggleTitle+'"' : ''}>${toggleLabel}</button>
+            <button class="btn-action btn-delete" onclick="excluirUsuario(${u.id},'${escH(u.nome)}')" ${isSelf ? 'disabled' : ''}>🗑 Excluir</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function escH(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function showFeedback(id, msg, isOk) {
+      const el = document.getElementById(id);
+      el.className = `feedback-inline ${isOk ? 'fi-ok' : 'fi-err'}`;
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+    function hideFeedback(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+
+    async function criarUsuario() {
+      hideFeedback('fi-novo');
+      const nome    = document.getElementById('n-nome').value.trim();
+      const usuario = document.getElementById('n-usuario').value.trim();
+      const senha   = document.getElementById('n-senha').value;
+      const papel   = document.getElementById('n-papel').value;
+      const btn     = document.getElementById('btn-novo');
+
+      if (!nome || !usuario || !senha) {
+        showFeedback('fi-novo', '❌ Preencha todos os campos obrigatórios.', false);
+        return;
+      }
+      if (senha.length < 6) {
+        showFeedback('fi-novo', '❌ A senha deve ter no mínimo 6 caracteres.', false);
+        return;
+      }
+
+      btn.textContent = 'Adicionando...';
+      btn.disabled    = true;
+
+      const r = await fetch('/api/usuarios', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ nome, usuario, senha, papel }),
+      }).catch(() => null);
+
+      btn.textContent = '➕ Adicionar Usuário';
+      btn.disabled    = false;
+
+      if (!r) { showFeedback('fi-novo', '❌ Erro de conexão.', false); return; }
+      if (r.status === 401) { window.location.href = '/login'; return; }
+      const data = await r.json();
+      if (r.ok) {
+        showFeedback('fi-novo', `✅ Usuário "${data.nome}" criado com sucesso.`, true);
+        document.getElementById('n-nome').value = '';
+        document.getElementById('n-usuario').value = '';
+        document.getElementById('n-senha').value = '';
+        document.getElementById('n-papel').value = 'operador';
+        carregarUsuarios();
+      } else {
+        showFeedback('fi-novo', `❌ ${data.erro || 'Erro ao criar usuário.'}`, false);
+      }
+    }
+
+    function abrirModal(id, nome, papel) {
+      document.getElementById('edit-id').value    = id;
+      document.getElementById('edit-nome').value  = nome;
+      document.getElementById('edit-papel').value = papel;
+      document.getElementById('edit-senha').value = '';
+      hideFeedback('fi-edit');
+      document.getElementById('modal-edicao').classList.add('open');
+    }
+
+    function fecharModal() {
+      document.getElementById('modal-edicao').classList.remove('open');
+    }
+
+    async function salvarEdicao() {
+      hideFeedback('fi-edit');
+      const id    = document.getElementById('edit-id').value;
+      const nome  = document.getElementById('edit-nome').value.trim();
+      const senha = document.getElementById('edit-senha').value || undefined;
+      const papel = document.getElementById('edit-papel').value;
+
+      if (!nome) { showFeedback('fi-edit', '❌ O nome não pode ser vazio.', false); return; }
+      if (senha !== undefined && senha.length < 6) {
+        showFeedback('fi-edit', '❌ Senha deve ter no mínimo 6 caracteres.', false); return;
+      }
+
+      const body = { nome, papel };
+      if (senha) body.senha = senha;
+
+      const r = await fetch(`/api/usuarios/${id}`, {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+      }).catch(() => null);
+
+      if (!r) { showFeedback('fi-edit', '❌ Erro de conexão.', false); return; }
+      const data = await r.json();
+      if (r.ok) {
+        fecharModal();
+        carregarUsuarios();
+      } else {
+        showFeedback('fi-edit', `❌ ${data.erro || 'Erro ao salvar.'}`, false);
+      }
+    }
+
+    async function toggleAtivo(id, ativoAtual) {
+      const novoAtivo = !ativoAtual;
+      const confirmMsg = novoAtivo ? 'Reativar este usuário?' : 'Desativar este usuário?';
+      if (!confirm(confirmMsg)) return;
+
+      const r = await fetch(`/api/usuarios/${id}`, {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ ativo: novoAtivo }),
+      }).catch(() => null);
+
+      if (!r || !r.ok) {
+        const data = r ? await r.json().catch(() => ({})) : {};
+        alert(`Erro: ${data.erro || 'Não foi possível alterar o status.'}`);
+        return;
+      }
+      carregarUsuarios();
+    }
+
+    async function excluirUsuario(id, nome) {
+      if (!confirm(`Excluir permanentemente o usuário "${nome}"? Esta ação não pode ser desfeita.`)) return;
+
+      const r = await fetch(`/api/usuarios/${id}`, { method: 'DELETE' }).catch(() => null);
+      if (!r || !r.ok) {
+        const data = r ? await r.json().catch(() => ({})) : {};
+        alert(`Erro: ${data.erro || 'Não foi possível excluir.'}`);
+        return;
+      }
+      carregarUsuarios();
+    }
+
+    // Fechar modal ao clicar fora
+    document.getElementById('modal-edicao').addEventListener('click', function(e) {
+      if (e.target === this) fecharModal();
+    });
+
+    // Inicialização
+    (async () => {
+      const me = await fetch('/api/auth/me').then(r => r.json()).catch(() => null);
+      if (me) meId = me.id;
+      await carregarLink();
+      await carregarUsuarios();
+    })();
+  </script>
+</body>
+</html>

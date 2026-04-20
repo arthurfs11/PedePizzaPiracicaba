@@ -29,4 +29,10 @@ const ACOMPANHAMENTOS = [
   { id: 'nan', nome: 'Sem acompanhamento', preco: 0  },
 ];
 
-module.exports = { PIZZAS, TAMANHOS, ACOMPANHAMENTOS };
+const BORDAS = [
+  { id: 'catupiry',    nome: 'Catupiry',     preco: 6.00 },
+  { id: 'creamcheese', nome: 'Cream Cheese', preco: 6.00 },
+  { id: 'cheddar',     nome: 'Cheddar',      preco: 6.00 },
+];
+
+module.exports = { PIZZAS, TAMANHOS, ACOMPANHAMENTOS, BORDAS };

@@ -1,4 +1,4 @@
-const { PIZZAS, TAMANHOS, ACOMPANHAMENTOS } = require('./menu');
+const { PIZZAS, TAMANHOS, ACOMPANHAMENTOS, BORDAS } = require('./menu');
 
 function kbTipoPizza() {
   return {
@@ -96,6 +96,26 @@ function kbIniciar() {
   };
 }
 
+function kbBorda() {
+  return {
+    inline_keyboard: [
+      [
+        { text: '✅ Sim, quero borda!', callback_data: 'bd_y' },
+        { text: '❌ Não, obrigado',     callback_data: 'bd_n' },
+      ],
+    ],
+  };
+}
+
+function kbBordaSabor() {
+  return {
+    inline_keyboard: BORDAS.map(b => [{
+      text: `${b.nome} (+R$${b.preco.toFixed(2).replace('.', ',')})`,
+      callback_data: `bds_${b.id}`,
+    }]),
+  };
+}
+
 module.exports = {
   kbTipoPizza,
   kbTamanho,
@@ -106,4 +126,6 @@ module.exports = {
   kbConfirmar,
   kbPagamento,
   kbIniciar,
+  kbBorda,
+  kbBordaSabor,
 };

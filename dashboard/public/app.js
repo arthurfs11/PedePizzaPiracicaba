@@ -1,5 +1,5 @@
 /* ============================================================
-   HELPERS — definidos primeiro para estarem disponíveis logo
+   HELPERS — definidos primeiro
    ============================================================ */
 
 function escHtml(str) {
@@ -12,10 +12,8 @@ function escHtml(str) {
 
 function formatarHora(dataStr) {
   try {
-    const d = new Date(String(dataStr).replace(' ', 'T'));
-    const h = String(d.getHours()).padStart(2, '0');
-    const m = String(d.getMinutes()).padStart(2, '0');
-    return `${h}:${m}`;
+    const d = new Date(String(dataStr || '').replace(' ', 'T'));
+    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   } catch (_) { return String(dataStr || ''); }
 }
 
@@ -51,7 +49,65 @@ function tocarSom() {
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.4);
-  } catch (_) { /* sem suporte */ }
+  } catch (_) {}
+}
+
+async function fazerLogout() {
+  await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+  window.location.href = '/login';
+}
+
+/* ============================================================
+   TIMER
+   ============================================================ */
+
+function formatarTimer(criadoEm) {
+  try {
+    const diffMs  = Math.max(0, Date.now() - new Date(String(criadoEm || '').replace(' ', 'T')).getTime());
+    const totalSeg = Math.floor(diffMs / 1000);
+    const h = Math.floor(totalSeg / 3600);
+    const m = Math.floor((totalSeg % 3600) / 60);
+    const s = totalSeg % 60;
+    const mm = String(m).padStart(2, '0');
+    const ss = String(s).padStart(2, '0');
+    return h > 0 ? `${h}h ${mm}:${ss}` : `${mm}:${ss}`;
+  } catch (_) { return '00:00'; }
+}
+
+function classeTimer(criadoEm) {
+  try {
+    const min = Math.floor(Math.max(0, Date.now() - new Date(String(criadoEm || '').replace(' ', 'T')).getTime()) / 60000);
+    if (min <= 10) return 'timer-verde';
+    if (min <= 20) return 'timer-amarelo';
+    if (min <  30) return 'timer-vermelho';
+    return 'timer-piscando';
+  } catch (_) { return 'timer-verde'; }
+}
+
+function atualizarTimers() {
+  document.querySelectorAll('[data-timer]').forEach(el => {
+    const criado = el.dataset.timer;
+    el.textContent = `⏱ ${formatarTimer(criado)}`;
+    el.className   = `card-timer ${classeTimer(criado)}`;
+  });
+}
+
+setInterval(atualizarTimers, 1000);
+
+/* ============================================================
+   ORDENAÇÃO — mais antigo no topo
+   ============================================================ */
+
+function reordenarColuna(colId) {
+  const col = document.getElementById(colId);
+  if (!col) return;
+  const cards = [...col.querySelectorAll('.card')];
+  cards.sort((a, b) => {
+    const ta = new Date(String(a.dataset.criado || '').replace(' ', 'T'));
+    const tb = new Date(String(b.dataset.criado || '').replace(' ', 'T'));
+    return ta - tb;
+  });
+  cards.forEach(c => col.appendChild(c));
 }
 
 /* ============================================================
@@ -62,14 +118,14 @@ function renderizarItem(item) {
   try {
     const tipo    = item.tipo === 'salgada' ? '🧀' : '🍓';
     const sabores = Array.isArray(item.sabores)
-      ? item.sabores.map((s) => s.nome || s).join(' / ')
+      ? item.sabores.map(s => s.nome || s).join(' / ')
       : String(item.sabores || '');
     const tamanhoNome  = item.tamanho?.nome  || item.tamanho  || '';
-    const tamanhoPreco = Number(item.tamanho?.preco || 0);
-    const precoStr     = tamanhoPreco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const acomp        = item.acompanhamento?.preco > 0
-      ? `<div class="item-acomp">🥤 ${escHtml(item.acompanhamento.nome)}</div>` : '';
-
+    const precoTotal   = Number(item.tamanho?.preco || 0) + Number(item.borda?.preco || 0);
+    const precoStr     = precoTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const bordaHtml    = item.borda
+      ? `<div class="item-acomp">🟡 Borda ${escHtml(item.borda.nome)} (+${Number(item.borda.preco).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})</div>`
+      : '';
     return `
       <div class="card-item">
         <div class="item-header">
@@ -77,10 +133,9 @@ function renderizarItem(item) {
           <span>${precoStr}</span>
         </div>
         <div class="item-desc">${escHtml(sabores)}</div>
-        ${acomp}
+        ${bordaHtml}
       </div>`;
   } catch (err) {
-    console.error('[renderizarItem] erro:', err, item);
     return `<div class="card-item"><div class="item-desc">Item indisponível</div></div>`;
   }
 }
@@ -102,10 +157,7 @@ function renderizarBotoes(status, numero) {
       <button class="btn btn-voltar"   onclick="mudarStatus('${n}','em_andamento')">↩ Voltar</button>
       <button class="btn btn-concluir" onclick="mudarStatus('${n}','concluido')">✅ Entrega concluída</button>`;
   }
-  if (status === 'concluido') {
-    return `<button class="btn btn-voltar" onclick="mudarStatus('${n}','em_entrega')">↩ Reabrir</button>`;
-  }
-  return '';
+  return ''; // concluido: sem ações
 }
 
 function adicionarCard(pedido, isNovo) {
@@ -120,22 +172,14 @@ function adicionarCard(pedido, isNovo) {
     const col = document.getElementById(colId);
     if (!col) { console.error('[adicionarCard] coluna não encontrada:', colId); return; }
 
-    // Oculta empty-state
     const empty = col.querySelector('.empty-state');
     if (empty) empty.style.display = 'none';
 
-    // Garante que itens é um array
-    const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
-    const itensHtml  = itens.map(renderizarItem).join('');
-    const total      = Number(pedido.total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const hora       = formatarHora(pedido.criado_em);
-    const botoesHtml = renderizarBotoes(pedido.status, pedido.numero);
-    const novoBadge  = isNovo ? '<span class="badge-new">Novo</span>' : '';
-
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.dataset.numero = pedido.numero;
-    card.dataset.status = pedido.status;
+    const itens     = Array.isArray(pedido.itens) ? pedido.itens : [];
+    const itensHtml = itens.map(renderizarItem).join('');
+    const total     = Number(pedido.total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const hora      = formatarHora(pedido.criado_em);
+    const novoBadge = isNovo ? '<span class="badge-new">Novo</span>' : '';
 
     const pagamentoBadge = pedido.pagamento === 'pix'
       ? '<span class="badge-pagamento badge-pix">🏦 Pix</span>'
@@ -149,14 +193,33 @@ function adicionarCard(pedido, isNovo) {
            </div>
          </div>` : '';
 
+    const telefoneHtml = pedido.telefone
+      ? `<span class="card-telefone">📞 ${escHtml(pedido.telefone)}</span>`
+      : '';
+
+    // Timer: ativo para pedidos em fluxo, estático para concluído
+    const timerHtml = pedido.status === 'concluido'
+      ? `<span class="card-timer timer-concluido">✅ Concluído às ${formatarHora(pedido.concluido_em || pedido.atualizado_em)}</span>`
+      : `<span class="card-timer ${classeTimer(pedido.criado_em)}" data-timer="${escHtml(pedido.criado_em || '')}">⏱ ${formatarTimer(pedido.criado_em)}</span>`;
+
+    const botoesHtml = renderizarBotoes(pedido.status, pedido.numero);
+
+    const card = document.createElement('div');
+    card.className      = 'card';
+    card.dataset.numero = pedido.numero;
+    card.dataset.status = pedido.status;
+    card.dataset.criado = pedido.criado_em || '';
+
     card.innerHTML = `
       <div class="card-header">
         <span class="card-numero">${escHtml(pedido.numero)} ${novoBadge}</span>
         <div class="card-header-right">${pagamentoBadge} <span class="card-time">🕐 ${hora}</span></div>
       </div>
+      <div class="card-timer-wrap">${timerHtml}</div>
       <div class="card-body">
         <div class="card-cliente">
           <span class="card-nome">👤 ${escHtml(pedido.nome)}</span>
+          ${telefoneHtml}
           <span class="card-endereco">📍 ${escHtml(pedido.endereco)}</span>
         </div>
         <div class="card-itens">${itensHtml}${acompHtml}</div>
@@ -165,11 +228,12 @@ function adicionarCard(pedido, isNovo) {
           <span class="card-total-value">${total}</span>
         </div>
       </div>
-      <div class="card-actions">${botoesHtml}</div>`;
+      ${botoesHtml ? `<div class="card-actions">${botoesHtml}</div>` : ''}`;
 
-    col.insertBefore(card, col.firstChild);
+    col.appendChild(card);
+    reordenarColuna(colId);
   } catch (err) {
-    console.error('[adicionarCard] erro ao renderizar pedido:', err, pedido);
+    console.error('[adicionarCard] erro:', err, pedido);
   }
   atualizarEmpties();
   atualizarBadges();
@@ -180,13 +244,18 @@ function adicionarCard(pedido, isNovo) {
    ============================================================ */
 
 async function carregarPedidos() {
-  console.log('[Dashboard] Carregando pedidos do servidor...');
+  console.log('[Dashboard] Carregando pedidos...');
   try {
-    const r = await fetch('/api/pedidos');
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const pedidos = await r.json();
-    console.log(`[Dashboard] ${pedidos.length} pedido(s) encontrado(s).`);
-    pedidos.forEach((p) => adicionarCard(p, false));
+    const [r1, r2] = await Promise.all([
+      fetch('/api/pedidos'),
+      fetch('/api/pedidos/concluidos-hoje'),
+    ]);
+    if (r1.status === 401 || r2.status === 401) { window.location.href = '/login'; return; }
+    if (!r1.ok || !r2.ok) throw new Error('Falha na API');
+
+    const [ativos, concluidos] = await Promise.all([r1.json(), r2.json()]);
+    console.log(`[Dashboard] ${ativos.length} ativo(s), ${concluidos.length} concluído(s) hoje.`);
+    [...ativos, ...concluidos].forEach(p => adicionarCard(p, false));
     await atualizarStats();
     atualizarEmpties();
   } catch (e) {
@@ -195,27 +264,27 @@ async function carregarPedidos() {
 }
 
 async function recarregarTodos() {
-  ['col-recebido', 'col-andamento', 'col-entrega', 'col-concluido'].forEach((id) => {
-    document.getElementById(id)?.querySelectorAll('.card').forEach((c) => c.remove());
+  ['col-recebido', 'col-andamento', 'col-entrega', 'col-concluido'].forEach(id => {
+    document.getElementById(id)?.querySelectorAll('.card').forEach(c => c.remove());
   });
+  atualizarEmpties();
   await carregarPedidos();
 }
 
 async function mudarStatus(numero, novoStatus) {
-  console.log(`[Dashboard] Mudando status ${numero} → ${novoStatus}`);
+  console.log(`[Dashboard] ${numero} → ${novoStatus}`);
   try {
     const r = await fetch(`/api/pedidos/${encodeURIComponent(numero)}/status`, {
-      method: 'PATCH',
+      method:  'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: novoStatus }),
+      body:    JSON.stringify({ status: novoStatus }),
     });
+    if (r.status === 401) { window.location.href = '/login'; return; }
     if (!r.ok) {
       const err = await r.json().catch(() => ({}));
-      console.error('[mudarStatus] Erro da API:', err);
       toast(`❌ Erro: ${err.erro || r.status}`);
     }
   } catch (e) {
-    console.error('[mudarStatus] Erro de rede:', e);
     toast('❌ Erro ao atualizar status');
   }
 }
@@ -223,6 +292,7 @@ async function mudarStatus(numero, novoStatus) {
 async function atualizarStats() {
   try {
     const r = await fetch('/api/stats');
+    if (r.status === 401) { window.location.href = '/login'; return; }
     const s = await r.json();
     document.getElementById('stat-recebido').textContent  = s.recebido;
     document.getElementById('stat-andamento').textContent = s.em_andamento;
@@ -230,7 +300,7 @@ async function atualizarStats() {
     document.getElementById('stat-concluido').textContent = s.concluido;
     document.getElementById('stat-total').textContent     =
       Number(s.total_hoje).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  } catch (_) { /* silencioso */ }
+  } catch (_) {}
 }
 
 /* ============================================================
@@ -238,33 +308,43 @@ async function atualizarStats() {
    ============================================================ */
 
 function atualizarBadges() {
-  [['col-recebido','badge-recebido'],['col-andamento','badge-andamento'],['col-entrega','badge-entrega'],['col-concluido','badge-concluido']]
-    .forEach(([colId, badgeId]) => {
-      const n = document.querySelectorAll(`#${colId} .card`).length;
-      const el = document.getElementById(badgeId);
-      if (el) el.textContent = n;
-    });
+  [
+    ['col-recebido',  'badge-recebido'],
+    ['col-andamento', 'badge-andamento'],
+    ['col-entrega',   'badge-entrega'],
+    ['col-concluido', 'badge-concluido'],
+  ].forEach(([colId, badgeId]) => {
+    const n  = document.querySelectorAll(`#${colId} .card`).length;
+    const el = document.getElementById(badgeId);
+    if (el) el.textContent = n;
+  });
 }
 
 function atualizarEmpties() {
-  [['col-recebido','empty-recebido'],['col-andamento','empty-andamento'],['col-entrega','empty-entrega'],['col-concluido','empty-concluido']]
-    .forEach(([colId, emptyId]) => {
-      const n  = document.querySelectorAll(`#${colId} .card`).length;
-      const el = document.getElementById(emptyId);
-      if (el) el.style.display = n === 0 ? 'flex' : 'none';
-    });
+  [
+    ['col-recebido',  'empty-recebido'],
+    ['col-andamento', 'empty-andamento'],
+    ['col-entrega',   'empty-entrega'],
+    ['col-concluido', 'empty-concluido'],
+  ].forEach(([colId, emptyId]) => {
+    const n  = document.querySelectorAll(`#${colId} .card`).length;
+    const el = document.getElementById(emptyId);
+    if (el) el.style.display = n === 0 ? 'flex' : 'none';
+  });
   atualizarBadges();
 }
 
 /* ── Relógio ── */
 function atualizarRelogio() {
   const agora = new Date();
-  const pad = (n) => String(n).padStart(2, '0');
-  const el = document.getElementById('clock');
+  const pad   = n => String(n).padStart(2, '0');
+  const el    = document.getElementById('clock');
   if (el) el.textContent = `${pad(agora.getHours())}:${pad(agora.getMinutes())}:${pad(agora.getSeconds())}`;
 }
 setInterval(atualizarRelogio, 1000);
 atualizarRelogio();
+
+setInterval(atualizarStats, 30000);
 
 /* ============================================================
    SOCKET.IO — inicializado depois de todas as funções
@@ -278,25 +358,26 @@ socket.on('connect', () => {
 });
 
 socket.on('disconnect', () => {
-  console.warn('[WS] Desconectado.');
   setWsStatus('error', '● Desconectado — tentando reconectar...');
 });
 
 socket.on('connect_error', (err) => {
-  console.error('[WS] Erro de conexão:', err.message);
   setWsStatus('error', '● Erro de conexão');
 });
 
 socket.on('novo_pedido', (pedido) => {
-  console.log('[WS] 🔔 Novo pedido recebido:', pedido.numero, pedido);
+  console.log('[WS] 🔔 Novo pedido:', pedido.numero);
   adicionarCard(pedido, true);
+  // Incrementa contador imediatamente e sincroniza com a API
+  const elRec = document.getElementById('stat-recebido');
+  if (elRec) elRec.textContent = parseInt(elRec.textContent || '0') + 1;
   atualizarStats();
   toast(`🔔 Novo pedido! ${pedido.numero} — ${pedido.nome}`);
   tocarSom();
 });
 
 socket.on('pedido_atualizado', (pedido) => {
-  console.log('[WS] 🔄 Pedido atualizado:', pedido.numero, '→', pedido.status);
+  console.log('[WS] 🔄 Atualizado:', pedido.numero, '→', pedido.status);
   const el = document.querySelector(`[data-numero="${pedido.numero}"]`);
   if (el) el.remove();
   adicionarCard(pedido, false);
@@ -307,5 +388,18 @@ socket.on('pedido_atualizado', (pedido) => {
 /* ============================================================
    INICIALIZAÇÃO
    ============================================================ */
+
+// Revelar link de admin se o usuário logado for administrador
+(async () => {
+  try {
+    const r = await fetch('/api/auth/me');
+    if (r.status === 401) { window.location.href = '/login'; return; }
+    const me = await r.json();
+    if (me?.papel === 'admin') {
+      const el = document.getElementById('nav-admin');
+      if (el) el.style.display = '';
+    }
+  } catch (_) {}
+})();
 
 carregarPedidos();

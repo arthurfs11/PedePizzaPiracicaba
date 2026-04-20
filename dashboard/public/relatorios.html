@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pede Pizza — Relatórios</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <span class="header-logo">🍕</span>
+      <div>
+        <h1 class="header-title">Pede Pizza Piracicaba</h1>
+        <p class="header-sub">Relatórios de Pedidos</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a href="/"           class="nav-link" id="nav-pedidos">📋 Pedidos</a>
+    <a href="/relatorios" class="nav-link active">📊 Relatórios</a>
+    <a href="/suporte"    class="nav-link" id="nav-suporte">🎧 Suporte</a>
+    <a href="/usuarios"   class="nav-link" id="nav-admin" style="display:none">👥 Usuários</a>
+    <button onclick="fazerLogout()" class="nav-logout">Sair</button>
+  </nav>
+
+  <!-- CONTENT -->
+  <main class="page-content">
+    <h2 class="page-title">📊 Relatórios de Pedidos</h2>
+
+    <!-- Filtros -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label>De</label>
+        <input type="date" id="de" />
+      </div>
+      <div class="filter-group">
+        <label>Até</label>
+        <input type="date" id="ate" />
+      </div>
+      <button class="btn btn-iniciar" onclick="buscar()" style="align-self:flex-end;flex:none;padding:8px 20px">🔍 Buscar</button>
+      <button class="btn btn-concluir" onclick="exportarCsv()" style="align-self:flex-end;flex:none;padding:8px 20px">📥 Exportar CSV</button>
+    </div>
+
+    <!-- Resumo -->
+    <div class="resumo-grid" id="resumo-grid">
+      <div class="resumo-card">
+        <div class="resumo-label">Total de Pedidos</div>
+        <div class="resumo-value" id="r-total">—</div>
+      </div>
+      <div class="resumo-card">
+        <div class="resumo-label">Faturamento Total</div>
+        <div class="resumo-value" id="r-faturado">—</div>
+      </div>
+      <div class="resumo-card">
+        <div class="resumo-label">Ticket Médio</div>
+        <div class="resumo-value" id="r-ticket">—</div>
+      </div>
+      <div class="resumo-card">
+        <div class="resumo-label">Pagamento via Pix</div>
+        <div class="resumo-value" id="r-pix">—</div>
+        <div class="resumo-sub" id="r-pix-pct"></div>
+      </div>
+      <div class="resumo-card">
+        <div class="resumo-label">Pagamento na Entrega</div>
+        <div class="resumo-value" id="r-entrega">—</div>
+        <div class="resumo-sub" id="r-entrega-pct"></div>
+      </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="table-wrap">
+      <table class="table-rel">
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th>Data</th>
+            <th>Cliente</th>
+            <th>Telefone</th>
+            <th>Endereço</th>
+            <th>Itens</th>
+            <th>Acomp.</th>
+            <th>Pagamento</th>
+            <th>Total</th>
+            <th>Concluído</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-body">
+          <tr><td colspan="10" class="table-empty">Selecione um período e clique em Buscar.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    async function fazerLogout() {
+      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      window.location.href = '/login';
+    }
+
+    fetch('/api/auth/me').then(r => r.json()).then(me => {
+      if (me?.papel === 'admin') {
+        const el = document.getElementById('nav-admin');
+        if (el) el.style.display = '';
+      }
+      if (me?.papel === 'contabil') {
+        ['nav-pedidos', 'nav-suporte'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
+      }
+    }).catch(() => {});
+
+    function fmt(valor) {
+      return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function fmtHora(dataStr) {
+      try {
+        const d = new Date(String(dataStr || '').replace(' ', 'T'));
+        return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      } catch(_) { return ''; }
+    }
+
+    function escH(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    let dadosAtuais = [];
+
+    async function buscar() {
+      const de  = document.getElementById('de').value;
+      const ate = document.getElementById('ate').value;
+      const params = new URLSearchParams();
+      if (de)  params.set('de',  de);
+      if (ate) params.set('ate', ate);
+
+      const r = await fetch(`/api/relatorios?${params}`).catch(() => null);
+      if (!r) { alert('Erro de conexão.'); return; }
+      if (r.status === 401) { window.location.href = '/login'; return; }
+      if (!r.ok) { alert('Erro ao buscar dados.'); return; }
+
+      const { pedidos, resumo } = await r.json();
+      dadosAtuais = pedidos;
+      renderizarResumo(resumo);
+      renderizarTabela(pedidos);
+    }
+
+    function renderizarResumo(r) {
+      document.getElementById('r-total').textContent    = r.total_pedidos;
+      document.getElementById('r-faturado').textContent = fmt(r.total_faturado);
+      document.getElementById('r-ticket').textContent   = fmt(r.ticket_medio);
+      document.getElementById('r-pix').textContent      = r.por_pagamento.pix;
+      document.getElementById('r-entrega').textContent  = r.por_pagamento.entrega;
+      const pct = n => r.total_pedidos > 0 ? Math.round(n / r.total_pedidos * 100) + '%' : '—';
+      document.getElementById('r-pix-pct').textContent     = `${pct(r.por_pagamento.pix)} dos pedidos`;
+      document.getElementById('r-entrega-pct').textContent = `${pct(r.por_pagamento.entrega)} dos pedidos`;
+    }
+
+    function renderizarTabela(pedidos) {
+      const tbody = document.getElementById('tabela-body');
+      if (pedidos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="table-empty">Nenhum pedido encontrado para o período selecionado.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = pedidos.map(p => {
+        const itens   = (p.itens || []).map(i => `${i.tamanho?.nome || ''} ${(i.sabores||[]).map(s=>s.nome).join('/')}`).join('<br>');
+        const acomp   = p.acompanhamento?.nome || '—';
+        const pag     = p.pagamento === 'pix' ? '<span class="badge-pagamento badge-pix">🏦 Pix</span>' : '<span class="badge-pagamento badge-entrega">💵 Entrega</span>';
+        const data    = (p.criado_em || '').split(' ')[0] || '—';
+        const hora    = fmtHora(p.criado_em);
+        const conc    = p.concluido_em ? fmtHora(p.concluido_em) : '—';
+        return `<tr>
+          <td class="td-numero">${escH(p.numero)}</td>
+          <td style="white-space:nowrap">${escH(data)}<br><span style="color:#94a3b8;font-size:.72rem">${hora}</span></td>
+          <td><strong>${escH(p.nome)}</strong></td>
+          <td>${escH(p.telefone || '—')}</td>
+          <td style="max-width:160px;font-size:.78rem">${escH(p.endereco)}</td>
+          <td style="font-size:.78rem">${itens}</td>
+          <td style="white-space:nowrap">${escH(acomp)}</td>
+          <td>${pag}</td>
+          <td class="td-total">${fmt(p.total)}</td>
+          <td style="white-space:nowrap">${escH(conc)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function exportarCsv() {
+      const de  = document.getElementById('de').value;
+      const ate = document.getElementById('ate').value;
+      const params = new URLSearchParams({ formato: 'csv' });
+      if (de)  params.set('de',  de);
+      if (ate) params.set('ate', ate);
+
+      const r = await fetch(`/api/relatorios?${params}`).catch(() => null);
+      if (!r || !r.ok) { alert('Erro ao gerar CSV.'); return; }
+
+      const blob = await r.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `relatorio-${de || 'inicio'}-${ate || 'fim'}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Inicializar com hoje
+    const hoje = new Date().toISOString().split('T')[0];
+    document.getElementById('de').value  = hoje;
+    document.getElementById('ate').value = hoje;
+    buscar();
+  </script>
+</body>
+</html>
