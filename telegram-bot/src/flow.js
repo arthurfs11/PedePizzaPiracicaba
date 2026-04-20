@@ -22,12 +22,21 @@ function pixConfig() {
 
 // ── Validações de entrada ──────────────────────────────────
 
+const TELEFONES_INVALIDOS = new Set([
+  '12345678901', '10987654321', '01234567890', '09876543210',
+  '11111111110', '22222222220', '33333333330', '44444444440',
+  '55555555550', '66666666660', '77777777770', '88888888880', '99999999990',
+]);
+
+function limparTelefone(texto) {
+  return texto.replace(/\D/g, '');
+}
+
 function validarTelefone(texto) {
-  const digits = texto.replace(/\D/g, '');
-  if (digits.length !== 11) return false;
-  if (/^(\d)\1{10}$/.test(digits)) return false;           // todos iguais: 00000000000, 99999999999
-  if (/^(012|123|234|345|456|567|678|789|890|987|876)/.test(digits) &&
-      digits === digits.split('').sort((a, b) => +a - +b).join('')) return false; // sequencial
+  const d = limparTelefone(texto);
+  if (d.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(d)) return false;   // todos iguais: 00000000000, 99999999999
+  if (TELEFONES_INVALIDOS.has(d)) return false;
   return true;
 }
 
@@ -139,7 +148,7 @@ async function handleText(ctx) {
       );
       return;
     }
-    sessao.telefone = texto;
+    sessao.telefone = limparTelefone(texto); // salva só os dígitos
     sessao.step     = 'waiting_address';
     setSession(chatId, sessao);
     await ctx.reply('Perfeito! 📍 Agora me diga o seu *endereço de entrega* (rua, número, bairro):', { parse_mode: 'Markdown' });
