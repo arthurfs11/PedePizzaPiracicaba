@@ -20,6 +20,21 @@ function pixConfig() {
   };
 }
 
+// ── Validações de entrada ──────────────────────────────────
+
+function validarTelefone(texto) {
+  const digits = texto.replace(/\D/g, '');
+  if (digits.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(digits)) return false;           // todos iguais: 00000000000, 99999999999
+  if (/^(012|123|234|345|456|567|678|789|890|987|876)/.test(digits) &&
+      digits === digits.split('').sort((a, b) => +a - +b).join('')) return false; // sequencial
+  return true;
+}
+
+function validarEndereco(texto) {
+  return /\d/.test(texto); // endereço deve conter pelo menos um número
+}
+
 // ── Helpers ────────────────────────────────────────────────
 
 function novaPizzaAtual() {
@@ -117,9 +132,11 @@ async function handleText(ctx) {
   }
 
   if (sessao.step === 'waiting_phone') {
-    const digits = texto.replace(/\D/g, '');
-    if (digits.length < 10 || digits.length > 11) {
-      await ctx.reply('📱 Por favor, informe um número válido com DDD (10 ou 11 dígitos).\n\nExemplo: *19 91234-5678*', { parse_mode: 'Markdown' });
+    if (!validarTelefone(texto)) {
+      await ctx.reply(
+        '📱 Número inválido. Por favor, informe um celular com DDD + 9 dígitos.\n\nExemplo: *19 91234-5678*',
+        { parse_mode: 'Markdown' }
+      );
       return;
     }
     sessao.telefone = texto;
@@ -130,6 +147,13 @@ async function handleText(ctx) {
   }
 
   if (sessao.step === 'waiting_address') {
+    if (!validarEndereco(texto)) {
+      await ctx.reply(
+        '📍 Endereço inválido — precisa conter o *número* da residência.\n\nExemplo: *Rua das Flores, 123, Jardim Europa*',
+        { parse_mode: 'Markdown' }
+      );
+      return;
+    }
     sessao.endereco  = texto;
     sessao.step      = 'choosing_type';
     sessao.pizzaAtual = novaPizzaAtual();

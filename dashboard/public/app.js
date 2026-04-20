@@ -62,9 +62,10 @@ async function fazerLogout() {
    ============================================================ */
 
 function parseDateLocal(str) {
-  // Interpreta o timestamp do SQLite (gravado em horário local pelo container TZ=Sao_Paulo)
-  // sem adicionar 'Z' para não tratar como UTC
-  return new Date(String(str || '').replace(' ', 'T'));
+  // SQLite armazena horário de Brasília (UTC-3). Forçamos o offset explicitamente
+  // para o timer funcionar independente do fuso do browser ou do container.
+  if (!str) return new Date('');
+  return new Date(String(str).replace(' ', 'T') + '-03:00');
 }
 
 function formatarTimer(criadoEm) {
