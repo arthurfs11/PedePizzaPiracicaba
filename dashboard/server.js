@@ -315,14 +315,15 @@ app.post('/api/pedidos', (req, res) => {
     if (!nome || !endereco || !pizzas || !Array.isArray(pizzas) || pizzas.length === 0) {
       return res.status(400).json({ erro: 'Dados do pedido incompletos' });
     }
-    const numero    = gerarNumeroPedido();
-    const itensJson = JSON.stringify(pizzas);
-    const acompJson = acompanhamento ? JSON.stringify(acompanhamento) : null;
+    const numero       = gerarNumeroPedido();
+    const itensJson    = JSON.stringify(pizzas);
+    const acompJson    = acompanhamento ? JSON.stringify(acompanhamento) : null;
+    const statusInicial = (pagamento === 'pix') ? 'pendente_pagamento' : 'recebido';
 
     db.prepare(`
       INSERT INTO pedidos (numero, nome, telefone, endereco, itens, acompanhamento, pagamento, total, status, chat_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'recebido', ?)
-    `).run(numero, nome, telefone || null, endereco, itensJson, acompJson, pagamento || 'entrega', total, telegram_chat_id || null);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(numero, nome, telefone || null, endereco, itensJson, acompJson, pagamento || 'entrega', total, statusInicial, telegram_chat_id || null);
 
     const pedido = parsePedido(db.prepare('SELECT * FROM pedidos WHERE numero = ?').get(numero));
     io.emit('novo_pedido', pedido);
@@ -351,7 +352,7 @@ app.patch('/api/pedidos/:numero/status', requireAuth, (req, res) => {
   try {
     const { numero } = req.params;
     const { status } = req.body;
-    const statusValidos = ['recebido', 'em_andamento', 'em_entrega', 'concluido'];
+    const statusValidos = ['pendente_pagamento', 'recebido', 'em_andamento', 'em_entrega', 'concluido'];
     if (!statusValidos.includes(status)) return res.status(400).json({ erro: 'Status inválido' });
 
     const pedido = db.prepare('SELECT * FROM pedidos WHERE numero = ?').get(numero);
@@ -387,12 +388,13 @@ app.patch('/api/pedidos/:numero/status', requireAuth, (req, res) => {
 
 // ── API: Stats ─────────────────────────────────────────────
 app.get('/api/stats', requireAuth, (req, res) => {
+  const pendente     = db.prepare("SELECT COUNT(*) as n FROM pedidos WHERE status = 'pendente_pagamento'").get().n;
   const recebido     = db.prepare("SELECT COUNT(*) as n FROM pedidos WHERE status = 'recebido'").get().n;
   const em_andamento = db.prepare("SELECT COUNT(*) as n FROM pedidos WHERE status = 'em_andamento'").get().n;
   const em_entrega   = db.prepare("SELECT COUNT(*) as n FROM pedidos WHERE status = 'em_entrega'").get().n;
   const concluido    = db.prepare("SELECT COUNT(*) as n FROM pedidos_historico WHERE date(concluido_em) = date('now','localtime')").get().n;
   const total_hoje   = db.prepare("SELECT COALESCE(SUM(total),0) as n FROM pedidos_historico WHERE date(concluido_em) = date('now','localtime')").get().n;
-  res.json({ recebido, em_andamento, em_entrega, concluido, total_hoje });
+  res.json({ pendente, recebido, em_andamento, em_entrega, concluido, total_hoje });
 });
 
 // ── API: Relatórios ────────────────────────────────────────

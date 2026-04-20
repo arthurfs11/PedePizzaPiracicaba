@@ -12,7 +12,7 @@ function escHtml(str) {
 
 function formatarHora(dataStr) {
   try {
-    const d = new Date(String(dataStr || '').replace(' ', 'T'));
+    const d = parseDateLocal(dataStr);
     return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   } catch (_) { return String(dataStr || ''); }
 }
@@ -61,22 +61,26 @@ async function fazerLogout() {
    TIMER
    ============================================================ */
 
+function parseDateLocal(str) {
+  // Interpreta o timestamp do SQLite (gravado em horário local pelo container TZ=Sao_Paulo)
+  // sem adicionar 'Z' para não tratar como UTC
+  return new Date(String(str || '').replace(' ', 'T'));
+}
+
 function formatarTimer(criadoEm) {
   try {
-    const diffMs  = Math.max(0, Date.now() - new Date(String(criadoEm || '').replace(' ', 'T')).getTime());
+    const diffMs   = Math.max(0, Date.now() - parseDateLocal(criadoEm).getTime());
     const totalSeg = Math.floor(diffMs / 1000);
-    const h = Math.floor(totalSeg / 3600);
-    const m = Math.floor((totalSeg % 3600) / 60);
-    const s = totalSeg % 60;
-    const mm = String(m).padStart(2, '0');
-    const ss = String(s).padStart(2, '0');
-    return h > 0 ? `${h}h ${mm}:${ss}` : `${mm}:${ss}`;
-  } catch (_) { return '00:00'; }
+    const hh = String(Math.floor(totalSeg / 3600)).padStart(2, '0');
+    const mm = String(Math.floor((totalSeg % 3600) / 60)).padStart(2, '0');
+    const ss = String(totalSeg % 60).padStart(2, '0');
+    return `${hh}:${mm}:${ss}`;
+  } catch (_) { return '00:00:00'; }
 }
 
 function classeTimer(criadoEm) {
   try {
-    const min = Math.floor(Math.max(0, Date.now() - new Date(String(criadoEm || '').replace(' ', 'T')).getTime()) / 60000);
+    const min = Math.floor(Math.max(0, Date.now() - parseDateLocal(criadoEm).getTime()) / 60000);
     if (min <= 10) return 'timer-verde';
     if (min <= 20) return 'timer-amarelo';
     if (min <  30) return 'timer-vermelho';
@@ -142,6 +146,10 @@ function renderizarItem(item) {
 
 function renderizarBotoes(status, numero) {
   const n = escHtml(numero);
+  if (status === 'pendente_pagamento') {
+    return `
+      <button class="btn btn-confirmar-pix" onclick="mudarStatus('${n}','recebido')">💰 Confirmar pagamento Pix</button>`;
+  }
   if (status === 'recebido') {
     return `
       <button class="btn btn-iniciar"  onclick="mudarStatus('${n}','em_andamento')">🔥 Iniciar preparo</button>
@@ -163,10 +171,11 @@ function renderizarBotoes(status, numero) {
 function adicionarCard(pedido, isNovo) {
   try {
     const colId = ({
-      recebido:     'col-recebido',
-      em_andamento: 'col-andamento',
-      em_entrega:   'col-entrega',
-      concluido:    'col-concluido',
+      pendente_pagamento: 'col-pendente',
+      recebido:           'col-recebido',
+      em_andamento:       'col-andamento',
+      em_entrega:         'col-entrega',
+      concluido:          'col-concluido',
     })[pedido.status] || 'col-recebido';
 
     const col = document.getElementById(colId);
@@ -264,7 +273,7 @@ async function carregarPedidos() {
 }
 
 async function recarregarTodos() {
-  ['col-recebido', 'col-andamento', 'col-entrega', 'col-concluido'].forEach(id => {
+  ['col-pendente', 'col-recebido', 'col-andamento', 'col-entrega', 'col-concluido'].forEach(id => {
     document.getElementById(id)?.querySelectorAll('.card').forEach(c => c.remove());
   });
   atualizarEmpties();
@@ -294,12 +303,13 @@ async function atualizarStats() {
     const r = await fetch('/api/stats');
     if (r.status === 401) { window.location.href = '/login'; return; }
     const s = await r.json();
-    document.getElementById('stat-recebido').textContent  = s.recebido;
-    document.getElementById('stat-andamento').textContent = s.em_andamento;
-    document.getElementById('stat-entrega').textContent   = s.em_entrega;
-    document.getElementById('stat-concluido').textContent = s.concluido;
-    document.getElementById('stat-total').textContent     =
-      Number(s.total_hoje).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const setPill = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setPill('stat-pendente',   s.pendente);
+    setPill('stat-recebido',   s.recebido);
+    setPill('stat-andamento',  s.em_andamento);
+    setPill('stat-entrega',    s.em_entrega);
+    setPill('stat-concluido',  s.concluido);
+    setPill('stat-total', Number(s.total_hoje).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
   } catch (_) {}
 }
 
@@ -309,6 +319,7 @@ async function atualizarStats() {
 
 function atualizarBadges() {
   [
+    ['col-pendente',  'badge-pendente'],
     ['col-recebido',  'badge-recebido'],
     ['col-andamento', 'badge-andamento'],
     ['col-entrega',   'badge-entrega'],
@@ -322,6 +333,7 @@ function atualizarBadges() {
 
 function atualizarEmpties() {
   [
+    ['col-pendente',  'empty-pendente'],
     ['col-recebido',  'empty-recebido'],
     ['col-andamento', 'empty-andamento'],
     ['col-entrega',   'empty-entrega'],
@@ -368,11 +380,15 @@ socket.on('connect_error', (err) => {
 socket.on('novo_pedido', (pedido) => {
   console.log('[WS] 🔔 Novo pedido:', pedido.numero);
   adicionarCard(pedido, true);
-  // Incrementa contador imediatamente e sincroniza com a API
-  const elRec = document.getElementById('stat-recebido');
-  if (elRec) elRec.textContent = parseInt(elRec.textContent || '0') + 1;
+  // Incrementa contador imediato (confirma via API em seguida)
+  const statId = pedido.pagamento === 'pix' ? 'stat-pendente' : 'stat-recebido';
+  const elStat = document.getElementById(statId);
+  if (elStat) elStat.textContent = parseInt(elStat.textContent || '0') + 1;
   atualizarStats();
-  toast(`🔔 Novo pedido! ${pedido.numero} — ${pedido.nome}`);
+  const msg = pedido.pagamento === 'pix'
+    ? `💰 Pix aguardando! ${pedido.numero} — ${pedido.nome}`
+    : `🔔 Novo pedido! ${pedido.numero} — ${pedido.nome}`;
+  toast(msg);
   tocarSom();
 });
 

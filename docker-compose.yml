@@ -44,6 +44,7 @@ services:
     environment:
       - PORT=8000
       - DB_PATH=/data/pedidos.db
+      - TZ=America/Sao_Paulo
     volumes:
       - pizza_db:/data
     networks:
@@ -64,6 +65,7 @@ services:
     env_file: .env
     environment:
       - N8N_WEBHOOK_URL=http://n8n:5678/webhook/direciona-pedido
+      - TZ=America/Sao_Paulo
     depends_on:
       - n8n
       - dashboard

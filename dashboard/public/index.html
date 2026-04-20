@@ -20,6 +20,10 @@
       </div>
     </div>
     <div class="header-stats">
+      <div class="stat-pill stat-pendente">
+        <span class="stat-dot"></span>
+        <span id="stat-pendente">0</span> Pix pendente
+      </div>
       <div class="stat-pill stat-recebido">
         <span class="stat-dot"></span>
         <span id="stat-recebido">0</span> Recebidos
@@ -62,6 +66,20 @@
 
   <!-- BOARD -->
   <main class="board">
+    <!-- Coluna: Pendente Pagamento Pix -->
+    <section class="column column-pendente">
+      <div class="column-header">
+        <span class="column-icon">💰</span>
+        <h2 class="column-title">Pix Pendente</h2>
+        <span class="column-badge" id="badge-pendente">0</span>
+      </div>
+      <div class="column-body" id="col-pendente">
+        <div class="empty-state" id="empty-pendente">
+          <p>Nenhum Pix aguardando</p>
+        </div>
+      </div>
+    </section>
+
     <!-- Coluna: Recebidos -->
     <section class="column column-recebido">
       <div class="column-header">
