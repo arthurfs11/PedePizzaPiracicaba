@@ -90,6 +90,7 @@ db.exec(`
   `ALTER TABLE pedidos ADD COLUMN acompanhamento TEXT`,
   `ALTER TABLE pedidos ADD COLUMN pagamento TEXT DEFAULT 'entrega'`,
   `ALTER TABLE pedidos ADD COLUMN telefone TEXT`,
+  `ALTER TABLE pedidos ADD COLUMN checkout_id TEXT`,
 ].forEach(sql => { try { db.exec(sql); } catch (_) {} });
 
 // Gerar slug único na primeira execução
@@ -311,28 +312,57 @@ app.get('/api/link', requireAuth, requireAdmin, (req, res) => {
 // ── API: Receber pedido — SEM auth (chamado pelo n8n) ──────
 app.post('/api/pedidos', (req, res) => {
   try {
-    const { nome, telefone, endereco, pizzas, acompanhamento, pagamento, total, telegram_chat_id } = req.body;
+    const { nome, telefone, endereco, pizzas, acompanhamento, pagamento, total, telegram_chat_id, checkout_id } = req.body;
     if (!nome || !endereco || !pizzas || !Array.isArray(pizzas) || pizzas.length === 0) {
       return res.status(400).json({ erro: 'Dados do pedido incompletos' });
     }
-    const numero       = gerarNumeroPedido();
-    const itensJson    = JSON.stringify(pizzas);
-    const acompJson    = acompanhamento ? JSON.stringify(acompanhamento) : null;
+    const numero        = gerarNumeroPedido();
+    const itensJson     = JSON.stringify(pizzas);
+    const acompJson     = acompanhamento ? JSON.stringify(acompanhamento) : null;
     const statusInicial = (pagamento === 'pix') ? 'pendente_pagamento' : 'recebido';
 
     db.prepare(`
-      INSERT INTO pedidos (numero, nome, telefone, endereco, itens, acompanhamento, pagamento, total, status, chat_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(numero, nome, telefone || null, endereco, itensJson, acompJson, pagamento || 'entrega', total, statusInicial, telegram_chat_id || null);
+      INSERT INTO pedidos (numero, nome, telefone, endereco, itens, acompanhamento, pagamento, total, status, chat_id, checkout_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(numero, nome, telefone || null, endereco, itensJson, acompJson, pagamento || 'entrega', total, statusInicial, telegram_chat_id || null, checkout_id || null);
 
     const pedido = parsePedido(db.prepare('SELECT * FROM pedidos WHERE numero = ?').get(numero));
     io.emit('novo_pedido', pedido);
     console.log(`[PEDIDO] ${numero} — ${nome}`);
-    return res.status(201).json({ numero, status: 'recebido', pedido });
+    return res.status(201).json({ numero, status: statusInicial, pedido });
   } catch (err) {
     console.error('[API] Erro ao salvar pedido:', err.message);
     return res.status(500).json({ erro: 'Erro interno ao salvar pedido' });
   }
+});
+
+// ── Webhook AbacatePay — confirma pagamento Pix automaticamente ──
+// Ativo apenas quando ABACATEPAY_WEBHOOK_SECRET estiver definido no .env
+app.post('/api/webhooks/abacatepay', (req, res) => {
+  const secret = process.env.ABACATEPAY_WEBHOOK_SECRET;
+  if (secret && req.query.secret !== secret) {
+    return res.status(401).json({ erro: 'Não autorizado' });
+  }
+
+  const evento = req.body;
+  if (evento?.event !== 'BILLING.PAID') {
+    return res.json({ ok: true, ignorado: true });
+  }
+
+  const checkoutId = evento?.data?.billing?.id;
+  if (!checkoutId) return res.status(400).json({ erro: 'checkout_id ausente no payload' });
+
+  const pedido = db.prepare("SELECT * FROM pedidos WHERE checkout_id = ? AND status = 'pendente_pagamento'").get(checkoutId);
+  if (!pedido) {
+    console.log(`[ABACATEPAY] Webhook: checkout ${checkoutId} não encontrado ou já confirmado`);
+    return res.json({ ok: true, ignorado: true });
+  }
+
+  db.prepare("UPDATE pedidos SET status = 'recebido', atualizado_em = datetime('now','localtime') WHERE numero = ?").run(pedido.numero);
+  const atualizado = parsePedido(db.prepare('SELECT * FROM pedidos WHERE numero = ?').get(pedido.numero));
+  io.emit('pedido_atualizado', atualizado);
+  console.log(`[ABACATEPAY] Pix confirmado — pedido ${pedido.numero}`);
+  return res.json({ ok: true });
 });
 
 // ── API: Pedidos ───────────────────────────────────────────

@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { PIZZAS, TAMANHOS, ACOMPANHAMENTOS, BORDAS } = require('./menu');
+const { isConfigurado: abacateConfigurado, criarCobrancaPix } = require('./abacatepay');
 const {
   kbTipoPizza, kbTamanho, kbQuantidadeSabores, kbSabores,
   kbAcompanhamento, kbMaisPizza, kbConfirmar, kbPagamento, kbIniciar,
@@ -58,17 +59,18 @@ function formatarResumo(sessao) {
 
 // ── Envio para n8n ─────────────────────────────────────────
 
-async function enviarPedidoParaN8n(sessao, chatId) {
+async function enviarPedidoParaN8n(sessao, chatId, checkoutId = null) {
   const total = calcularTotal(sessao);
   const payload = {
-    nome:            sessao.nome,
-    telefone:        sessao.telefone  || null,
-    endereco:        sessao.endereco,
-    pizzas:          sessao.pizzas,
-    acompanhamento:  sessao.acompanhamento || null,
-    pagamento:       sessao.pagamento || 'entrega',
+    nome:             sessao.nome,
+    telefone:         sessao.telefone  || null,
+    endereco:         sessao.endereco,
+    pizzas:           sessao.pizzas,
+    acompanhamento:   sessao.acompanhamento || null,
+    pagamento:        sessao.pagamento || 'entrega',
     total,
     telegram_chat_id: String(chatId),
+    ...(checkoutId && { checkout_id: checkoutId }),
   };
   const { data } = await axios.post(N8N_WEBHOOK_URL, payload, { timeout: 10000 });
   return data;
@@ -351,9 +353,31 @@ async function handleCallback(ctx) {
 
     await ctx.reply('⏳ Processando seu pedido, aguarde...');
 
+    // ── Gerar cobrança AbacatePay (se configurado) ────────────
+    let checkoutId  = null;
+    let checkoutUrl = null;
+    if (isPix && abacateConfigurado()) {
+      try {
+        const total      = calcularTotal(sessao);
+        const tempId     = `bot-${chatId}-${Date.now()}`;
+        const descricao  = (sessao.pizzas || []).map(p =>
+          `${p.tamanho?.nome} ${p.sabores.map(s => s.nome).join('/')}`
+        ).join(', ');
+        const resultado = await criarCobrancaPix({
+          tempId, nome: sessao.nome, telefone: sessao.telefone, total, descricao,
+        });
+        checkoutId  = resultado.id;
+        checkoutUrl = resultado.url;
+        console.log(`[BOT] AbacatePay checkout criado: ${checkoutId}`);
+      } catch (err) {
+        console.error('[BOT] Falha AbacatePay, usando Pix manual:', err.message);
+      }
+    }
+
+    // ── Enviar pedido para n8n (com checkout_id se gerado) ───
     let numero = 'N/A';
     try {
-      const resp = await enviarPedidoParaN8n(sessao, chatId);
+      const resp = await enviarPedidoParaN8n(sessao, chatId, checkoutId);
       numero = resp?.numero || 'N/A';
     } catch (err) {
       console.error('[BOT] Falha ao enviar para n8n:', err.message);
@@ -361,28 +385,39 @@ async function handleCallback(ctx) {
 
     if (isPix) {
       const total = calcularTotal(sessao);
-      const { key, nome: pixNome, cidade: pixCidade } = pixConfig();
 
-      if (!key) {
-        // Chave Pix não configurada no .env
+      if (checkoutUrl) {
+        // ── AbacatePay: envia link de checkout ────────────────
         await ctx.reply(
-          `✅ *Pedido #${numero} confirmado!*\n\n🏦 *Pagamento via Pix*\n\nEm breve enviaremos o código Pix pelo chat. 😊\n\n🕐 Tempo estimado: *40–50 min* após confirmação do pagamento.`,
+          `✅ *Pedido confirmado!*\n\n🏦 *Pagamento via Pix — R$${total.toFixed(2).replace('.', ',')}*\n\nClique no link abaixo para pagar:`,
+          { parse_mode: 'Markdown' }
+        );
+        await ctx.reply(checkoutUrl);
+        await ctx.reply(
+          `⏳ Assim que o pagamento for confirmado, seu pedido entra automaticamente para preparo!\n🕐 Tempo estimado: *40–50 min* após confirmação.`,
           { parse_mode: 'Markdown' }
         );
       } else {
-        const txid = numero.replace(/[^A-Za-z0-9]/g, '').substring(0, 25);
-        const pixCode = gerarPixCopiaECola({ chave: key, nome: pixNome, cidade: pixCidade, valor: total, txid });
-
-        await ctx.reply(
-          `✅ *Pedido #${numero} confirmado!*\n\n🏦 *Pague via Pix — R$${total.toFixed(2).replace('.', ',')}*\n\nCopie o código abaixo e cole no seu banco ou carteira digital:`,
-          { parse_mode: 'Markdown' }
-        );
-        // Texto simples para cópia sem risco de formatação Markdown quebrar o código
-        await ctx.reply(pixCode);
-        await ctx.reply(
-          `⏳ Assim que o pagamento for identificado, seu pedido entra para preparo!\n🕐 Tempo estimado: *40–50 minutos* após confirmação.`,
-          { parse_mode: 'Markdown' }
-        );
+        // ── Pix manual (fallback) ─────────────────────────────
+        const { key, nome: pixNome, cidade: pixCidade } = pixConfig();
+        if (!key) {
+          await ctx.reply(
+            `✅ *Pedido #${numero} confirmado!*\n\n🏦 *Pagamento via Pix*\n\nEm breve enviaremos o código Pix pelo chat. 😊\n\n🕐 Tempo estimado: *40–50 min* após confirmação do pagamento.`,
+            { parse_mode: 'Markdown' }
+          );
+        } else {
+          const txid    = numero.replace(/[^A-Za-z0-9]/g, '').substring(0, 25);
+          const pixCode = gerarPixCopiaECola({ chave: key, nome: pixNome, cidade: pixCidade, valor: total, txid });
+          await ctx.reply(
+            `✅ *Pedido #${numero} confirmado!*\n\n🏦 *Pague via Pix — R$${total.toFixed(2).replace('.', ',')}*\n\nCopie o código abaixo e cole no seu banco ou carteira digital:`,
+            { parse_mode: 'Markdown' }
+          );
+          await ctx.reply(pixCode);
+          await ctx.reply(
+            `⏳ Assim que o pagamento for identificado, seu pedido entra para preparo!\n🕐 Tempo estimado: *40–50 minutos* após confirmação.`,
+            { parse_mode: 'Markdown' }
+          );
+        }
       }
     } else {
       await ctx.reply(
