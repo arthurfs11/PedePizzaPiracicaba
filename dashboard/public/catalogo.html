@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pede Pizza — Cardápio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .cat-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .cat-tab {
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: 1.5px solid #e2e8f0;
+      background: #fff;
+      font-size: .85rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      color: #475569;
+      transition: all .15s;
+    }
+    .cat-tab:hover { background: #f8fafc; }
+    .cat-tab.active { background: #f97316; color: #fff; border-color: #f97316; }
+
+    .cat-section { display: none; }
+    .cat-section.active { display: block; }
+
+    .cat-table-wrap {
+      overflow-x: auto;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+    .cat-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+    }
+    .cat-table th {
+      background: #f8fafc;
+      padding: 10px 14px;
+      text-align: left;
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: #64748b;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .cat-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #1e293b;
+      vertical-align: middle;
+    }
+    .cat-table tr:last-child td { border-bottom: none; }
+    .cat-table tr.inativo td { opacity: .5; }
+
+    .badge-tipo-s { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; border-radius: 6px; padding: 2px 8px; font-size: .72rem; font-weight: 700; }
+    .badge-tipo-d { background: #fdf4ff; color: #9333ea; border: 1px solid #e9d5ff; border-radius: 6px; padding: 2px 8px; font-size: .72rem; font-weight: 700; }
+
+    .btn-action { border: none; border-radius: 6px; padding: 5px 12px; font-size: .75rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: opacity .15s; margin-right: 4px; }
+    .btn-action:hover { opacity: .75; }
+    .btn-edit   { background: #dbeafe; color: #1d4ed8; }
+    .btn-toggle { background: #fef9c3; color: #854d0e; }
+    .btn-delete { background: #fee2e2; color: #b91c1c; }
+
+    .add-form {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 22px;
+      max-width: 680px;
+    }
+    .add-form-title { font-size: .92rem; font-weight: 700; color: #1e293b; margin-bottom: 16px; }
+    .add-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 540px) { .add-form .form-row { grid-template-columns: 1fr; } }
+
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal-box { background: #fff; border-radius: 14px; padding: 28px; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+    .modal-title { font-size: 1rem; font-weight: 700; color: #1e293b; margin-bottom: 18px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+    .btn-modal-cancel { background: #f1f5f9; color: #475569; border: none; border-radius: 8px; padding: 10px 18px; font-size: .85rem; font-weight: 600; font-family: inherit; cursor: pointer; }
+    .btn-modal-salvar { background: #f97316; color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-size: .85rem; font-weight: 700; font-family: inherit; cursor: pointer; }
+    .btn-modal-salvar:hover { opacity: .88; }
+    .btn-modal-cancel:hover { background: #e2e8f0; }
+    .feedback-inline { border-radius: 8px; padding: 9px 12px; font-size: .8rem; font-weight: 500; margin-top: 10px; display: none; }
+    .fi-err { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+    .fi-ok  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }
+
+    .import-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+    }
+    .import-toolbar span { font-size: .82rem; color: #64748b; font-weight: 500; flex: 1 1 auto; }
+    .btn-template { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 14px; font-size: .8rem; font-weight: 600; font-family: inherit; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+    .btn-template:hover { background: #e2e8f0; }
+    .btn-importar { background: #f97316; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: .8rem; font-weight: 700; font-family: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+    .btn-importar:hover { opacity: .88; }
+    #import-result { border-radius: 10px; padding: 12px 16px; font-size: .82rem; margin-bottom: 16px; display: none; }
+    #import-result.ok  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+    #import-result.err { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+    #import-erros { margin-top: 8px; padding-left: 16px; line-height: 1.7; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-brand">
+      <span class="header-logo">🍕</span>
+      <div>
+        <h1 class="header-title">Pede Pizza Piracicaba</h1>
+        <p class="header-sub">Gerenciamento do Cardápio</p>
+      </div>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <a href="/home"      class="nav-link">🏠 Início</a>
+    <a href="/"          class="nav-link">📋 Pedidos</a>
+    <a href="/relatorios"class="nav-link">📊 Relatórios</a>
+    <a href="/suporte"   class="nav-link">🎧 Suporte</a>
+    <a href="/usuarios"  class="nav-link" id="nav-admin">👥 Usuários</a>
+    <a href="/catalogo"  class="nav-link active">🍕 Cardápio</a>
+    <a href="/clientes"      class="nav-link">👤 Clientes</a>
+    <a href="/configuracoes" class="nav-link">⚙️ Configurações</a>
+    <a href="/entregadores"  class="nav-link">🛵 Entregadores</a>
+    <button onclick="fazerLogout()" class="nav-logout">Sair</button>
+  </nav>
+
+  <main class="page-content">
+    <h2 class="page-title">🍕 Cardápio</h2>
+    <p style="color:#64748b;font-size:.85rem;margin-bottom:20px">
+      As alterações feitas aqui são refletidas automaticamente no chatbot do Telegram na próxima interação.
+    </p>
+
+    <div class="import-toolbar">
+      <span>📥 Importar itens do cardápio via planilha CSV</span>
+      <a href="/template_importacao_catalogo.csv" download class="btn-template">⬇️ Baixar template</a>
+      <label class="btn-importar">
+        📤 Importar CSV
+        <input type="file" accept=".csv" style="display:none" onchange="importarCSV(this)">
+      </label>
+    </div>
+
+    <div id="import-result"></div>
+
+    <div class="cat-tabs">
+      <button class="cat-tab active" onclick="trocarAba('pizzas')">🍕 Pizzas</button>
+      <button class="cat-tab" onclick="trocarAba('tamanhos')">📏 Tamanhos</button>
+      <button class="cat-tab" onclick="trocarAba('bordas')">🔵 Bordas</button>
+      <button class="cat-tab" onclick="trocarAba('acompanhamentos')">🥤 Acompanhamentos</button>
+    </div>
+
+    <!-- PIZZAS -->
+    <div class="cat-section active" id="sec-pizzas">
+      <div class="cat-table-wrap">
+        <table class="cat-table">
+          <thead><tr><th>ID</th><th>Nome</th><th>Tipo</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="tb-pizzas"><tr><td colspan="5">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="add-form">
+        <div class="add-form-title">➕ Nova Pizza</div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>ID único <span class="req">*</span></label>
+            <input type="text" id="np-id" placeholder="ex: fragocom" />
+          </div>
+          <div class="form-field">
+            <label>Tipo <span class="req">*</span></label>
+            <select id="np-tipo">
+              <option value="salgada">🧀 Salgada</option>
+              <option value="doce">🍓 Doce</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-field" style="margin-top:12px">
+          <label>Nome <span class="req">*</span></label>
+          <input type="text" id="np-nome" placeholder="ex: Frango com Catupiry" />
+        </div>
+        <button class="btn-enviar" style="margin-top:14px" onclick="adicionarPizza()">➕ Adicionar Pizza</button>
+        <div class="feedback-inline" id="fi-np"></div>
+      </div>
+    </div>
+
+    <!-- TAMANHOS -->
+    <div class="cat-section" id="sec-tamanhos">
+      <div class="cat-table-wrap">
+        <table class="cat-table">
+          <thead><tr><th>ID</th><th>Nome</th><th>Fatias</th><th>Preço</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="tb-tamanhos"><tr><td colspan="6">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="add-form">
+        <div class="add-form-title">➕ Novo Tamanho</div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>ID único <span class="req">*</span></label>
+            <input type="text" id="nt-id" placeholder="ex: gg" />
+          </div>
+          <div class="form-field">
+            <label>Nome <span class="req">*</span></label>
+            <input type="text" id="nt-nome" placeholder="ex: GG" />
+          </div>
+        </div>
+        <div class="form-row" style="margin-top:12px">
+          <div class="form-field">
+            <label>Fatias <span class="req">*</span></label>
+            <input type="number" id="nt-fatias" min="1" placeholder="16" />
+          </div>
+          <div class="form-field">
+            <label>Preço (R$) <span class="req">*</span></label>
+            <input type="number" id="nt-preco" min="0" step="0.01" placeholder="65.00" />
+          </div>
+        </div>
+        <button class="btn-enviar" style="margin-top:14px" onclick="adicionarTamanho()">➕ Adicionar Tamanho</button>
+        <div class="feedback-inline" id="fi-nt"></div>
+      </div>
+    </div>
+
+    <!-- BORDAS -->
+    <div class="cat-section" id="sec-bordas">
+      <div class="cat-table-wrap">
+        <table class="cat-table">
+          <thead><tr><th>ID</th><th>Nome</th><th>Preço</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="tb-bordas"><tr><td colspan="5">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="add-form">
+        <div class="add-form-title">➕ Nova Borda</div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>ID único <span class="req">*</span></label>
+            <input type="text" id="nb-id" placeholder="ex: parmesao" />
+          </div>
+          <div class="form-field">
+            <label>Nome <span class="req">*</span></label>
+            <input type="text" id="nb-nome" placeholder="ex: Parmesão" />
+          </div>
+        </div>
+        <div class="form-field" style="margin-top:12px">
+          <label>Preço (R$) <span class="req">*</span></label>
+          <input type="number" id="nb-preco" min="0" step="0.01" placeholder="7.00" />
+        </div>
+        <button class="btn-enviar" style="margin-top:14px" onclick="adicionarBorda()">➕ Adicionar Borda</button>
+        <div class="feedback-inline" id="fi-nb"></div>
+      </div>
+    </div>
+
+    <!-- ACOMPANHAMENTOS -->
+    <div class="cat-section" id="sec-acompanhamentos">
+      <div class="cat-table-wrap">
+        <table class="cat-table">
+          <thead><tr><th>ID</th><th>Nome</th><th>Preço</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="tb-acompanhamentos"><tr><td colspan="5">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="add-form">
+        <div class="add-form-title">➕ Novo Acompanhamento</div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>ID único <span class="req">*</span></label>
+            <input type="text" id="na-id" placeholder="ex: agua" />
+          </div>
+          <div class="form-field">
+            <label>Nome <span class="req">*</span></label>
+            <input type="text" id="na-nome" placeholder="ex: Água 500ml" />
+          </div>
+        </div>
+        <div class="form-field" style="margin-top:12px">
+          <label>Preço (R$) <span class="req">*</span></label>
+          <input type="number" id="na-preco" min="0" step="0.01" placeholder="3.00" />
+        </div>
+        <button class="btn-enviar" style="margin-top:14px" onclick="adicionarAcomp()">➕ Adicionar Acompanhamento</button>
+        <div class="feedback-inline" id="fi-na"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal de edição genérico -->
+  <div class="modal-overlay" id="modal-edit">
+    <div class="modal-box">
+      <div class="modal-title" id="modal-edit-title">✏️ Editar item</div>
+      <input type="hidden" id="edit-secao" />
+      <input type="hidden" id="edit-id-val" />
+      <div id="edit-fields"></div>
+      <div class="feedback-inline" id="fi-edit-cat"></div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="fecharModalEdit()">Cancelar</button>
+        <button class="btn-modal-salvar" onclick="salvarEdicaoCat()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function escH(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    async function fazerLogout() {
+      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      window.location.href = '/login';
+    }
+
+    function trocarAba(aba) {
+      document.querySelectorAll('.cat-tab').forEach((t, i) => {
+        const abas = ['pizzas','tamanhos','bordas','acompanhamentos'];
+        t.classList.toggle('active', abas[i] === aba);
+      });
+      document.querySelectorAll('.cat-section').forEach(s => s.classList.remove('active'));
+      document.getElementById(`sec-${aba}`).classList.add('active');
+    }
+
+    function showFI(id, msg, ok) {
+      const el = document.getElementById(id);
+      el.className = `feedback-inline ${ok ? 'fi-ok' : 'fi-err'}`;
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+    function hideFI(id) { document.getElementById(id).style.display = 'none'; }
+
+    // ── Pizzas ─────────────────────────────────────────────
+    async function carregarCatalogo() {
+      const r = await fetch('/api/catalogo').catch(() => null);
+      if (!r || !r.ok) return;
+      const d = await r.json();
+      renderPizzas(d.pizzas_completo || []);
+      renderTamanhos();
+      renderBordas();
+      renderAcomps();
+    }
+
+    function renderPizzas(lista) {
+      const tb = document.getElementById('tb-pizzas');
+      if (!lista.length) { tb.innerHTML = '<tr><td colspan="5" class="table-empty">Nenhuma pizza cadastrada.</td></tr>'; return; }
+      tb.innerHTML = lista.map(p => `
+        <tr class="${p.ativo ? '' : 'inativo'}">
+          <td><code>${escH(p.id)}</code></td>
+          <td><strong>${escH(p.nome)}</strong></td>
+          <td>${p.tipo === 'salgada' ? '<span class="badge-tipo-s">🧀 Salgada</span>' : '<span class="badge-tipo-d">🍓 Doce</span>'}</td>
+          <td>${p.ativo ? '✅ Ativo' : '⛔ Inativo'}</td>
+          <td>
+            <button class="btn-action btn-edit"   onclick="abrirEditPizza('${escH(p.id)}','${escH(p.nome)}','${p.tipo}')">✏️ Editar</button>
+            <button class="btn-action btn-toggle"  onclick="toggleCat('pizzas','${escH(p.id)}',${p.ativo})">${p.ativo?'Desativar':'Ativar'}</button>
+            <button class="btn-action btn-delete"  onclick="deletarCat('pizzas','${escH(p.id)}','${escH(p.nome)}')">🗑</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    async function adicionarPizza() {
+      hideFI('fi-np');
+      const id   = document.getElementById('np-id').value.trim();
+      const nome = document.getElementById('np-nome').value.trim();
+      const tipo = document.getElementById('np-tipo').value;
+      if (!id || !nome) { showFI('fi-np','❌ Preencha todos os campos.',false); return; }
+      const r = await fetch('/api/catalogo/pizzas', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id,nome,tipo}) }).catch(()=>null);
+      const d = r ? await r.json() : null;
+      if (r?.ok) {
+        showFI('fi-np','✅ Pizza adicionada!',true);
+        document.getElementById('np-id').value = '';
+        document.getElementById('np-nome').value = '';
+        carregarCatalogo();
+      } else { showFI('fi-np',`❌ ${d?.erro||'Erro'}`,false); }
+    }
+
+    function abrirEditPizza(id, nome, tipo) {
+      document.getElementById('edit-secao').value  = 'pizzas';
+      document.getElementById('edit-id-val').value = id;
+      document.getElementById('modal-edit-title').textContent = '✏️ Editar Pizza';
+      document.getElementById('edit-fields').innerHTML = `
+        <div class="form-field" style="margin-bottom:12px">
+          <label>Nome</label>
+          <input type="text" id="ef-nome" value="${escH(nome)}" />
+        </div>
+        <div class="form-field">
+          <label>Tipo</label>
+          <select id="ef-tipo">
+            <option value="salgada" ${tipo==='salgada'?'selected':''}>🧀 Salgada</option>
+            <option value="doce"    ${tipo==='doce'?'selected':''}>🍓 Doce</option>
+          </select>
+        </div>`;
+      hideFI('fi-edit-cat');
+      document.getElementById('modal-edit').classList.add('open');
+    }
+
+    // ── Tamanhos ────────────────────────────────────────────
+    async function renderTamanhos() {
+      const todos = await getTodosTabela('tamanhos');
+      const tb = document.getElementById('tb-tamanhos');
+      if (!todos.length) { tb.innerHTML = '<tr><td colspan="6" class="table-empty">Nenhum tamanho.</td></tr>'; return; }
+      tb.innerHTML = todos.map(t => `
+        <tr class="${t.ativo ? '' : 'inativo'}">
+          <td><code>${escH(t.id)}</code></td>
+          <td>${escH(t.nome)}</td>
+          <td>${t.fatias}</td>
+          <td>R$${Number(t.preco).toFixed(2).replace('.',',')}</td>
+          <td>${t.ativo ? '✅ Ativo' : '⛔ Inativo'}</td>
+          <td>
+            <button class="btn-action btn-edit"  onclick="abrirEditTamanho('${escH(t.id)}','${escH(t.nome)}',${t.fatias},${t.preco})">✏️ Editar</button>
+            <button class="btn-action btn-toggle" onclick="toggleCat('tamanhos','${escH(t.id)}',${t.ativo})">${t.ativo?'Desativar':'Ativar'}</button>
+            <button class="btn-action btn-delete" onclick="deletarCat('tamanhos','${escH(t.id)}','${escH(t.nome)}')">🗑</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    async function adicionarTamanho() {
+      hideFI('fi-nt');
+      const id     = document.getElementById('nt-id').value.trim();
+      const nome   = document.getElementById('nt-nome').value.trim();
+      const fatias = parseInt(document.getElementById('nt-fatias').value);
+      const preco  = parseFloat(document.getElementById('nt-preco').value);
+      if (!id||!nome||!fatias||isNaN(preco)) { showFI('fi-nt','❌ Preencha todos os campos.',false); return; }
+      const r = await fetch('/api/catalogo/tamanhos', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id,nome,fatias,preco}) }).catch(()=>null);
+      const d = r ? await r.json() : null;
+      if (r?.ok) {
+        showFI('fi-nt','✅ Tamanho adicionado!',true);
+        ['nt-id','nt-nome','nt-fatias','nt-preco'].forEach(x => document.getElementById(x).value='');
+        renderTamanhos();
+      } else { showFI('fi-nt',`❌ ${d?.erro||'Erro'}`,false); }
+    }
+
+    function abrirEditTamanho(id, nome, fatias, preco) {
+      document.getElementById('edit-secao').value  = 'tamanhos';
+      document.getElementById('edit-id-val').value = id;
+      document.getElementById('modal-edit-title').textContent = '✏️ Editar Tamanho';
+      document.getElementById('edit-fields').innerHTML = `
+        <div class="form-field" style="margin-bottom:12px">
+          <label>Nome</label>
+          <input type="text" id="ef-nome" value="${escH(nome)}" />
+        </div>
+        <div class="form-row" style="gap:12px;display:grid;grid-template-columns:1fr 1fr;margin-bottom:12px">
+          <div class="form-field">
+            <label>Fatias</label>
+            <input type="number" id="ef-fatias" value="${fatias}" min="1" />
+          </div>
+          <div class="form-field">
+            <label>Preço (R$)</label>
+            <input type="number" id="ef-preco" value="${preco}" min="0" step="0.01" />
+          </div>
+        </div>`;
+      hideFI('fi-edit-cat');
+      document.getElementById('modal-edit').classList.add('open');
+    }
+
+    // ── Bordas ──────────────────────────────────────────────
+    async function renderBordas() {
+      const todos = await getTodosTabela('bordas');
+      const tb = document.getElementById('tb-bordas');
+      if (!todos.length) { tb.innerHTML = '<tr><td colspan="5" class="table-empty">Nenhuma borda.</td></tr>'; return; }
+      tb.innerHTML = todos.map(b => `
+        <tr class="${b.ativo ? '' : 'inativo'}">
+          <td><code>${escH(b.id)}</code></td>
+          <td>${escH(b.nome)}</td>
+          <td>R$${Number(b.preco).toFixed(2).replace('.',',')}</td>
+          <td>${b.ativo ? '✅ Ativo' : '⛔ Inativo'}</td>
+          <td>
+            <button class="btn-action btn-edit"  onclick="abrirEditBorda('${escH(b.id)}','${escH(b.nome)}',${b.preco})">✏️ Editar</button>
+            <button class="btn-action btn-toggle" onclick="toggleCat('bordas','${escH(b.id)}',${b.ativo})">${b.ativo?'Desativar':'Ativar'}</button>
+            <button class="btn-action btn-delete" onclick="deletarCat('bordas','${escH(b.id)}','${escH(b.nome)}')">🗑</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    async function adicionarBorda() {
+      hideFI('fi-nb');
+      const id    = document.getElementById('nb-id').value.trim();
+      const nome  = document.getElementById('nb-nome').value.trim();
+      const preco = parseFloat(document.getElementById('nb-preco').value);
+      if (!id||!nome||isNaN(preco)) { showFI('fi-nb','❌ Preencha todos os campos.',false); return; }
+      const r = await fetch('/api/catalogo/bordas', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id,nome,preco}) }).catch(()=>null);
+      const d = r ? await r.json() : null;
+      if (r?.ok) {
+        showFI('fi-nb','✅ Borda adicionada!',true);
+        ['nb-id','nb-nome','nb-preco'].forEach(x => document.getElementById(x).value='');
+        renderBordas();
+      } else { showFI('fi-nb',`❌ ${d?.erro||'Erro'}`,false); }
+    }
+
+    function abrirEditBorda(id, nome, preco) {
+      document.getElementById('edit-secao').value  = 'bordas';
+      document.getElementById('edit-id-val').value = id;
+      document.getElementById('modal-edit-title').textContent = '✏️ Editar Borda';
+      document.getElementById('edit-fields').innerHTML = `
+        <div class="form-field" style="margin-bottom:12px">
+          <label>Nome</label>
+          <input type="text" id="ef-nome" value="${escH(nome)}" />
+        </div>
+        <div class="form-field">
+          <label>Preço (R$)</label>
+          <input type="number" id="ef-preco" value="${preco}" min="0" step="0.01" />
+        </div>`;
+      hideFI('fi-edit-cat');
+      document.getElementById('modal-edit').classList.add('open');
+    }
+
+    // ── Acompanhamentos ─────────────────────────────────────
+    async function renderAcomps() {
+      const todos = await getTodosTabela('acompanhamentos');
+      const tb = document.getElementById('tb-acompanhamentos');
+      if (!todos.length) { tb.innerHTML = '<tr><td colspan="5" class="table-empty">Nenhum acompanhamento.</td></tr>'; return; }
+      tb.innerHTML = todos.map(a => `
+        <tr class="${a.ativo ? '' : 'inativo'}">
+          <td><code>${escH(a.id)}</code></td>
+          <td>${escH(a.nome)}</td>
+          <td>R$${Number(a.preco).toFixed(2).replace('.',',')}</td>
+          <td>${a.ativo ? '✅ Ativo' : '⛔ Inativo'}</td>
+          <td>
+            <button class="btn-action btn-edit"  onclick="abrirEditAcomp('${escH(a.id)}','${escH(a.nome)}',${a.preco})">✏️ Editar</button>
+            <button class="btn-action btn-toggle" onclick="toggleCat('acompanhamentos','${escH(a.id)}',${a.ativo})">${a.ativo?'Desativar':'Ativar'}</button>
+            <button class="btn-action btn-delete" onclick="deletarCat('acompanhamentos','${escH(a.id)}','${escH(a.nome)}')">🗑</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    async function adicionarAcomp() {
+      hideFI('fi-na');
+      const id    = document.getElementById('na-id').value.trim();
+      const nome  = document.getElementById('na-nome').value.trim();
+      const preco = parseFloat(document.getElementById('na-preco').value);
+      if (!id||!nome||isNaN(preco)) { showFI('fi-na','❌ Preencha todos os campos.',false); return; }
+      const r = await fetch('/api/catalogo/acompanhamentos', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id,nome,preco}) }).catch(()=>null);
+      const d = r ? await r.json() : null;
+      if (r?.ok) {
+        showFI('fi-na','✅ Acompanhamento adicionado!',true);
+        ['na-id','na-nome','na-preco'].forEach(x => document.getElementById(x).value='');
+        renderAcomps();
+      } else { showFI('fi-na',`❌ ${d?.erro||'Erro'}`,false); }
+    }
+
+    function abrirEditAcomp(id, nome, preco) {
+      document.getElementById('edit-secao').value  = 'acompanhamentos';
+      document.getElementById('edit-id-val').value = id;
+      document.getElementById('modal-edit-title').textContent = '✏️ Editar Acompanhamento';
+      document.getElementById('edit-fields').innerHTML = `
+        <div class="form-field" style="margin-bottom:12px">
+          <label>Nome</label>
+          <input type="text" id="ef-nome" value="${escH(nome)}" />
+        </div>
+        <div class="form-field">
+          <label>Preço (R$)</label>
+          <input type="number" id="ef-preco" value="${preco}" min="0" step="0.01" />
+        </div>`;
+      hideFI('fi-edit-cat');
+      document.getElementById('modal-edit').classList.add('open');
+    }
+
+    // ── Ações genéricas ─────────────────────────────────────
+    async function getTodosTabela(secao) {
+      const r = await fetch('/api/catalogo').catch(()=>null);
+      if (!r?.ok) return [];
+      const d = await r.json();
+      const map = { tamanhos: 'tamanhos_completo', bordas: 'bordas_completo', acompanhamentos: 'acomps_completo' };
+      return d[map[secao]] || [];
+    }
+
+    async function toggleCat(secao, id, ativoAtual) {
+      const novoAtivo = !ativoAtual;
+      if (!confirm(`${novoAtivo ? 'Ativar' : 'Desativar'} este item?`)) return;
+      const r = await fetch(`/api/catalogo/${secao}/${encodeURIComponent(id)}`, {
+        method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ ativo: novoAtivo }),
+      }).catch(()=>null);
+      if (r?.ok) recarregarSecao(secao);
+      else alert('Erro ao alterar status.');
+    }
+
+    async function deletarCat(secao, id, nome) {
+      if (!confirm(`Excluir "${nome}" permanentemente?`)) return;
+      const r = await fetch(`/api/catalogo/${secao}/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(()=>null);
+      if (r?.ok) recarregarSecao(secao);
+      else alert('Erro ao excluir.');
+    }
+
+    function recarregarSecao(secao) {
+      if (secao === 'pizzas') carregarCatalogo();
+      else if (secao === 'tamanhos') renderTamanhos();
+      else if (secao === 'bordas') renderBordas();
+      else if (secao === 'acompanhamentos') renderAcomps();
+    }
+
+    function fecharModalEdit() { document.getElementById('modal-edit').classList.remove('open'); }
+
+    async function salvarEdicaoCat() {
+      hideFI('fi-edit-cat');
+      const secao = document.getElementById('edit-secao').value;
+      const id    = document.getElementById('edit-id-val').value;
+      const nome  = document.getElementById('ef-nome')?.value?.trim();
+      if (!nome) { showFI('fi-edit-cat','❌ Nome não pode ser vazio.',false); return; }
+
+      const body = { nome };
+      if (secao === 'pizzas')   body.tipo   = document.getElementById('ef-tipo')?.value;
+      if (secao !== 'pizzas') {
+        const precoEl = document.getElementById('ef-preco');
+        if (precoEl) body.preco = parseFloat(precoEl.value);
+      }
+      if (secao === 'tamanhos') {
+        const fatiasEl = document.getElementById('ef-fatias');
+        if (fatiasEl) body.fatias = parseInt(fatiasEl.value);
+      }
+
+      const r = await fetch(`/api/catalogo/${secao}/${encodeURIComponent(id)}`, {
+        method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body),
+      }).catch(()=>null);
+      const d = r ? await r.json() : null;
+      if (r?.ok) { fecharModalEdit(); recarregarSecao(secao); }
+      else { showFI('fi-edit-cat',`❌ ${d?.erro||'Erro ao salvar.'}`,false); }
+    }
+
+    async function importarCSV(input) {
+      const file = input.files[0];
+      if (!file) return;
+      input.value = '';
+      const resultEl = document.getElementById('import-result');
+      resultEl.className = '';
+      resultEl.style.display = 'none';
+
+      const csv = await file.text();
+      const r = await fetch('/api/catalogo/importar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ csv }),
+      }).catch(() => null);
+
+      if (!r) {
+        resultEl.className = 'err';
+        resultEl.innerHTML = '❌ Erro de conexão ao importar.';
+        resultEl.style.display = 'block';
+        return;
+      }
+
+      const d = await r.json();
+      if (r.ok) {
+        let html = `✅ <strong>${d.importados}</strong> item(ns) importado(s) com sucesso.`;
+        if (d.erros && d.erros.length) {
+          html += `<ul id="import-erros">`;
+          d.erros.forEach(e => { html += `<li>Linha ${e.linha}: ${e.motivo}</li>`; });
+          html += `</ul>`;
+        }
+        resultEl.className = d.erros?.length ? 'err' : 'ok';
+        resultEl.innerHTML = html;
+        await carregarCatalogo();
+      } else {
+        resultEl.className = 'err';
+        resultEl.innerHTML = `❌ ${d?.erro || 'Erro ao processar o arquivo.'}`;
+      }
+      resultEl.style.display = 'block';
+    }
+
+    document.getElementById('modal-edit').addEventListener('click', function(e) {
+      if (e.target === this) fecharModalEdit();
+    });
+
+    (async () => {
+      const me = await fetch('/api/auth/me').then(r=>r.json()).catch(()=>null);
+      if (!me || !['admin', 'super_admin', 'operador'].includes(me.papel)) {
+        window.location.href = '/'; return;
+      }
+      // Admins veem links extras
+      if (me.papel === 'admin' || me.papel === 'super_admin') {
+        ['nav-admin','nav-clientes','nav-config','nav-entregadores'].forEach(id => {
+          const el = document.getElementById(id); if (el) el.style.display = '';
+        });
+      }
+      await carregarCatalogo();
+    })();
+  </script>
+</body>
+</html>

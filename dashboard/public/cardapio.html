@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pede Pizza Piracicaba — Cardápio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --header: #1a1a2e;
+      --laranja: #f97316;
+      --laranja-dark: #ea6a0a;
+      --bg: #f0f2f5;
+      --surface: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.12);
+    }
+
+    html { font-size: 15px; scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: var(--header);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.25rem;
+      height: 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.3);
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    .header-brand span { font-size: 1.4rem; }
+    .cart-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      background: var(--laranja);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: .45rem .9rem;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+      font-family: inherit;
+    }
+    .cart-btn:hover { background: var(--laranja-dark); }
+    .cart-badge {
+      background: #ef4444;
+      color: #fff;
+      border-radius: 50%;
+      width: 20px; height: 20px;
+      font-size: .7rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+    }
+    .cart-badge.hidden { display: none; }
+
+    /* ── HERO ── */
+    .hero {
+      margin-top: 60px;
+      background: linear-gradient(135deg, #f97316 0%, #fb923c 50%, #fdba74 100%);
+      padding: 2.5rem 1.25rem 2rem;
+      text-align: center;
+      color: #fff;
+    }
+    .hero h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: .4rem; }
+    .hero p { font-size: 1rem; opacity: .9; }
+    .hero-status {
+      display: inline-block;
+      margin-top: .8rem;
+      background: rgba(255,255,255,.2);
+      border-radius: 20px;
+      padding: .25rem .75rem;
+      font-size: .82rem;
+      font-weight: 500;
+    }
+
+    /* ── CLOSED BANNER ── */
+    .closed-banner {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      padding: 3rem 2rem;
+      text-align: center;
+      margin: 2rem auto;
+      max-width: 480px;
+    }
+    .closed-banner h2 { font-size: 1.5rem; margin-bottom: .6rem; }
+    .closed-banner p { color: var(--text-secondary); }
+
+    /* ── TABS ── */
+    .tabs-wrapper {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 60px;
+      z-index: 90;
+    }
+    .tabs {
+      display: flex;
+      gap: 0;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex-shrink: 0;
+      padding: .85rem 1.1rem;
+      font-size: .88rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      font-family: inherit;
+      transition: color .2s, border-color .2s;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      color: var(--laranja);
+      border-bottom-color: var(--laranja);
+    }
+    .tab-btn:hover:not(.active) { color: var(--text-primary); }
+
+    /* ── MENU ── */
+    .menu-section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 6rem;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Pizza grid */
+    .pizza-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    @media (min-width: 480px) { .pizza-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 640px) { .pizza-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 900px) { .pizza-grid { grid-template-columns: repeat(4, 1fr); } }
+
+    .pizza-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.1rem .9rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+      transition: box-shadow .2s, transform .2s;
+    }
+    .pizza-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .pizza-card .emoji { font-size: 2.2rem; }
+    .pizza-card h3 { font-size: .88rem; font-weight: 600; color: var(--text-primary); line-height: 1.3; }
+    .btn-personalizar {
+      background: var(--laranja);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: .45rem .7rem;
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .2s;
+      margin-top: auto;
+    }
+    .btn-personalizar:hover { background: var(--laranja-dark); }
+    .btn-personalizar:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+    /* Acompanhamentos */
+    .acomp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .acomp-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+    }
+    .acomp-card h3 { font-size: .92rem; font-weight: 600; }
+    .acomp-price { font-size: .85rem; color: var(--text-secondary); }
+    .btn-acomp {
+      background: var(--laranja);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: .4rem .7rem;
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .2s;
+      margin-top: auto;
+    }
+    .btn-acomp.remove { background: #ef4444; }
+    .btn-acomp:hover:not(.remove) { background: var(--laranja-dark); }
+    .btn-acomp.remove:hover { background: #dc2626; }
+    .btn-acomp:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0,0,0,.55);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: 0 20px 60px rgba(0,0,0,.3);
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.3rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+      padding: .2rem .4rem;
+      line-height: 1;
+      border-radius: 4px;
+    }
+    .modal-close:hover { background: var(--bg); }
+    .modal h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; padding-right: 2rem; }
+
+    .step { display: none; }
+    .step.active { display: block; }
+
+    /* Steps: tamanho */
+    .tamanho-list { display: flex; flex-direction: column; gap: .6rem; }
+    .tamanho-option {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .75rem 1rem;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+    }
+    .tamanho-option:hover { border-color: var(--laranja); background: #fff7ed; }
+    .tamanho-option.selected { border-color: var(--laranja); background: #fff7ed; }
+    .tamanho-option input[type="radio"] { accent-color: var(--laranja); }
+    .tamanho-info { flex: 1; }
+    .tamanho-nome { font-weight: 600; font-size: .9rem; }
+    .tamanho-desc { font-size: .8rem; color: var(--text-secondary); }
+    .tamanho-preco { font-weight: 700; color: var(--laranja); font-size: .95rem; }
+
+    /* Steps: sabores */
+    .sabor-list { display: flex; flex-direction: column; gap: .5rem; }
+    .sabor-option {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .65rem .9rem;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+    }
+    .sabor-option:hover:not(.disabled) { border-color: var(--laranja); background: #fff7ed; }
+    .sabor-option.selected { border-color: var(--laranja); background: #fff7ed; }
+    .sabor-option.disabled { opacity: .5; cursor: not-allowed; }
+    .sabor-option input[type="checkbox"] { accent-color: var(--laranja); }
+    .sabor-nome { font-size: .88rem; font-weight: 500; }
+
+    /* Steps: borda */
+    .borda-list { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .borda-btn {
+      padding: .5rem 1rem;
+      border-radius: 7px;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: .85rem;
+      font-weight: 500;
+      font-family: inherit;
+      transition: border-color .2s, background .2s, color .2s;
+    }
+    .borda-btn:hover { border-color: var(--laranja); background: #fff7ed; }
+    .borda-btn.selected { border-color: var(--laranja); background: var(--laranja); color: #fff; }
+
+    .step-hint {
+      font-size: .82rem;
+      color: var(--text-secondary);
+      margin-bottom: .75rem;
+    }
+    .step-actions { margin-top: 1.2rem; display: flex; gap: .6rem; }
+    .btn-primary {
+      flex: 1;
+      background: var(--laranja);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: .65rem 1rem;
+      font-size: .92rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .2s;
+    }
+    .btn-primary:hover { background: var(--laranja-dark); }
+    .btn-primary:disabled { background: #cbd5e1; cursor: not-allowed; }
+    .btn-secondary {
+      background: var(--bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .65rem 1rem;
+      font-size: .92rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .2s;
+    }
+    .btn-secondary:hover { background: #e2e8f0; }
+
+    /* ── CART SIDEBAR ── */
+    .cart-sidebar {
+      position: fixed;
+      top: 60px;
+      right: 0;
+      bottom: 0;
+      width: 320px;
+      background: var(--surface);
+      box-shadow: -4px 0 20px rgba(0,0,0,.1);
+      z-index: 95;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform .3s ease;
+    }
+    .cart-sidebar.open { transform: translateX(0); }
+
+    @media (min-width: 768px) {
+      .cart-sidebar {
+        transform: translateX(100%);
+      }
+      .cart-sidebar.open {
+        transform: translateX(0);
+      }
+      body.cart-open .menu-section {
+        margin-right: 320px;
+      }
+    }
+
+    /* Mobile: slide-up panel */
+    @media (max-width: 767px) {
+      .cart-sidebar {
+        top: auto;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        max-height: 80vh;
+        border-radius: 20px 20px 0 0;
+        transform: translateY(100%);
+        transition: transform .3s ease;
+      }
+      .cart-sidebar.open { transform: translateY(0); }
+    }
+
+    .cart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .cart-header h3 { font-size: 1rem; font-weight: 700; }
+    .cart-close-btn {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+      padding: .2rem .4rem;
+      border-radius: 4px;
+    }
+    .cart-close-btn:hover { background: var(--bg); }
+
+    .cart-items {
+      flex: 1;
+      overflow-y: auto;
+      padding: .75rem 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+    }
+    .cart-empty { color: var(--text-secondary); font-size: .88rem; text-align: center; padding: 2rem 0; }
+
+    .cart-item {
+      display: flex;
+      gap: .6rem;
+      align-items: flex-start;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      padding: .6rem .75rem;
+    }
+    .cart-item-info { flex: 1; }
+    .cart-item-name { font-size: .85rem; font-weight: 600; line-height: 1.3; }
+    .cart-item-desc { font-size: .78rem; color: var(--text-secondary); margin-top: .15rem; }
+    .cart-item-price { font-size: .88rem; font-weight: 700; color: var(--laranja); white-space: nowrap; }
+    .cart-remove-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      color: #94a3b8;
+      padding: .1rem;
+      flex-shrink: 0;
+      border-radius: 4px;
+      transition: color .2s;
+    }
+    .cart-remove-btn:hover { color: #ef4444; }
+
+    .cart-footer {
+      padding: .75rem 1.1rem;
+      border-top: 1px solid var(--border);
+    }
+    .cart-line {
+      display: flex;
+      justify-content: space-between;
+      font-size: .85rem;
+      padding: .2rem 0;
+      color: var(--text-secondary);
+    }
+    .cart-line.total {
+      font-size: .98rem;
+      font-weight: 700;
+      color: var(--laranja);
+      padding-top: .4rem;
+      border-top: 1px solid var(--border);
+      margin-top: .3rem;
+    }
+    .cart-line.desconto { color: #16a34a; font-weight: 600; }
+    .btn-checkout {
+      margin-top: .75rem;
+      width: 100%;
+      background: var(--laranja);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: .75rem 1rem;
+      font-size: .95rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .2s;
+    }
+    .btn-checkout:hover { background: var(--laranja-dark); }
+
+    /* ── CHECKOUT MODAL ── */
+    .checkout-form { display: flex; flex-direction: column; gap: .85rem; }
+    .form-group { display: flex; flex-direction: column; gap: .3rem; }
+    .form-group label { font-size: .82rem; font-weight: 600; color: var(--text-secondary); }
+    .form-group input,
+    .form-group select {
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: .6rem .8rem;
+      font-size: .9rem;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: var(--surface);
+      transition: border-color .2s;
+      outline: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus { border-color: var(--laranja); }
+
+    .pgto-group { display: flex; gap: .6rem; }
+    .pgto-btn {
+      flex: 1;
+      padding: .6rem;
+      border-radius: 8px;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: .85rem;
+      font-weight: 600;
+      font-family: inherit;
+      text-align: center;
+      transition: border-color .2s, background .2s, color .2s;
+    }
+    .pgto-btn.selected { border-color: var(--laranja); background: var(--laranja); color: #fff; }
+    .pgto-btn:hover:not(.selected) { border-color: var(--laranja); background: #fff7ed; }
+
+    .fidelidade-banner {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 8px;
+      padding: .7rem .9rem;
+      font-size: .85rem;
+      color: #166534;
+      font-weight: 500;
+      display: none;
+    }
+    .fidelidade-banner.visible { display: block; }
+
+    .checkout-summary {
+      margin-top: .5rem;
+      padding-top: .75rem;
+      border-top: 1px solid var(--border);
+    }
+    .summary-line {
+      display: flex;
+      justify-content: space-between;
+      font-size: .85rem;
+      color: var(--text-secondary);
+      padding: .2rem 0;
+    }
+    .summary-line.total {
+      font-weight: 700;
+      color: var(--laranja);
+      font-size: .98rem;
+      padding-top: .4rem;
+      border-top: 1px dashed var(--border);
+      margin-top: .3rem;
+    }
+    .summary-line.desconto { color: #16a34a; font-weight: 600; }
+
+    /* ── SUCCESS ── */
+    .success-screen {
+      text-align: center;
+      padding: 1rem 0;
+    }
+    .success-screen .icon { font-size: 3rem; margin-bottom: .5rem; }
+    .success-screen h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: .3rem; }
+    .success-screen .order-num { font-size: 1rem; color: var(--laranja); font-weight: 700; margin-bottom: .3rem; }
+    .success-screen .tempo { font-size: .9rem; color: var(--text-secondary); margin-bottom: 1.2rem; }
+    .pix-block {
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .pix-code-wrap {
+      display: flex;
+      gap: .5rem;
+      margin-top: .6rem;
+    }
+    .pix-code-wrap input {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: .5rem .7rem;
+      font-size: .78rem;
+      font-family: monospace;
+      background: #fff;
+      color: var(--text-primary);
+    }
+    .btn-copy {
+      background: var(--laranja);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: .5rem .8rem;
+      font-size: .78rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .btn-pix-link {
+      display: inline-block;
+      background: var(--laranja);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      padding: .75rem 1.5rem;
+      font-weight: 700;
+      font-size: .95rem;
+      margin-bottom: .75rem;
+      transition: background .2s;
+    }
+    .btn-pix-link:hover { background: var(--laranja-dark); }
+    .btn-novo-pedido {
+      background: var(--bg);
+      color: var(--text-primary);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: .65rem 1.5rem;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .2s;
+    }
+    .btn-novo-pedido:hover { background: #e2e8f0; }
+
+    /* Loading state */
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+      font-size: .9rem;
+    }
+
+    /* Overlay for mobile cart */
+    .cart-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.4);
+      z-index: 94;
+    }
+    .cart-overlay.open { display: block; }
+
+    /* Transition helpers */
+    .fade-in {
+      animation: fadeIn .2s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(.97); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Section title */
+    .section-loading { padding: 2.5rem 0; text-align: center; color: var(--text-secondary); }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <span>🍕</span>
+      Pede Pizza Piracicaba
+    </div>
+    <button class="cart-btn" id="cartToggle" onclick="toggleCart()">
+      🛒 Carrinho
+      <span class="cart-badge hidden" id="cartBadge">0</span>
+    </button>
+  </header>
+
+  <!-- CART OVERLAY (mobile) -->
+  <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <h1>🍕 Peça sua pizza agora</h1>
+    <p>Entrega direta, sem comissão</p>
+    <div class="hero-status" id="heroStatus" style="display:none;"></div>
+  </section>
+
+  <!-- CLOSED BANNER (hidden by default) -->
+  <div id="closedBanner" style="display:none; padding: 1.5rem 1rem;">
+    <div class="closed-banner">
+      <div style="font-size:3rem;margin-bottom:.5rem;">😔</div>
+      <h2>Estamos fechados no momento</h2>
+      <p>Estamos fora do horário de atendimento. Volte mais tarde para fazer seu pedido!</p>
+    </div>
+  </div>
+
+  <!-- MENU -->
+  <div id="menuWrapper">
+    <!-- TABS -->
+    <div class="tabs-wrapper">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('salgadas')">🍕 Pizzas Salgadas</button>
+        <button class="tab-btn" onclick="switchTab('doces')">🍓 Pizzas Doces</button>
+        <button class="tab-btn" onclick="switchTab('acompanhamentos')">🥤 Acompanhamentos</button>
+      </div>
+    </div>
+
+    <!-- PANELS -->
+    <div class="menu-section" id="menuSection">
+      <div class="tab-panel active" id="panel-salgadas">
+        <div class="section-loading" id="loading-salgadas">Carregando cardápio…</div>
+        <div class="pizza-grid" id="grid-salgadas"></div>
+      </div>
+      <div class="tab-panel" id="panel-doces">
+        <div class="section-loading" id="loading-doces" style="display:none;">Carregando cardápio…</div>
+        <div class="pizza-grid" id="grid-doces"></div>
+      </div>
+      <div class="tab-panel" id="panel-acompanhamentos">
+        <div class="section-loading" id="loading-acomp" style="display:none;">Carregando…</div>
+        <div class="acomp-grid" id="grid-acompanhamentos"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CART SIDEBAR -->
+  <aside class="cart-sidebar" id="cartSidebar">
+    <div class="cart-header">
+      <h3>🛒 Seu Carrinho</h3>
+      <button class="cart-close-btn" onclick="toggleCart()">✕</button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty">Seu carrinho está vazio.</div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-line"><span>Subtotal</span><span id="cartSubtotal">R$ 0,00</span></div>
+      <div class="cart-line"><span>Taxa de entrega</span><span id="cartTaxa">R$ --</span></div>
+      <div class="cart-line desconto" id="cartDescontoLine" style="display:none;"><span id="cartDescontoLabel">Desconto fidelidade</span><span id="cartDesconto">– R$ 0,00</span></div>
+      <div class="cart-line total"><span>Total</span><span id="cartTotal">R$ 0,00</span></div>
+      <button class="btn-checkout" onclick="openCheckout()">Finalizar pedido</button>
+    </div>
+  </aside>
+
+  <!-- PIZZA BUILDER MODAL -->
+  <div class="modal-overlay" id="builderOverlay">
+    <div class="modal fade-in" id="builderModal">
+      <button class="modal-close" onclick="closeBuilder()">✕</button>
+
+      <!-- Step 1: Tamanho -->
+      <div class="step active" id="step1">
+        <h2 id="builderTitle">Escolha o tamanho</h2>
+        <div class="tamanho-list" id="tamanhoList"></div>
+        <div class="step-actions">
+          <button class="btn-primary" id="btnStep1Next" onclick="goStep2()" disabled>Continuar →</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Sabores -->
+      <div class="step" id="step2">
+        <h2 id="step2Title">Escolha os sabores</h2>
+        <p class="step-hint" id="step2Hint"></p>
+        <div class="sabor-list" id="saborList"></div>
+        <div class="step-actions">
+          <button class="btn-secondary" onclick="goStep1()">← Voltar</button>
+          <button class="btn-primary" id="btnStep2Next" onclick="goStep3OrAdd()">Continuar →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Borda -->
+      <div class="step" id="step3">
+        <h2>Deseja borda recheada?</h2>
+        <p class="step-hint">+R$ 6,00 por borda recheada</p>
+        <div class="borda-list" id="bordaList"></div>
+        <div class="step-actions">
+          <button class="btn-secondary" onclick="goStep2()">← Voltar</button>
+          <button class="btn-primary" id="btnStep3Add" onclick="addToCart()">Adicionar ao carrinho</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHECKOUT MODAL -->
+  <div class="modal-overlay" id="checkoutOverlay">
+    <div class="modal" id="checkoutModal">
+      <button class="modal-close" onclick="closeCheckout()">✕</button>
+      <div id="checkoutContent">
+        <h2>📋 Finalizar Pedido</h2>
+        <div class="checkout-form">
+          <div class="form-group">
+            <label for="fNome">Nome completo</label>
+            <input type="text" id="fNome" placeholder="Seu nome" autocomplete="name" />
+          </div>
+          <div class="form-group">
+            <label for="fTel">Celular com DDD</label>
+            <input type="tel" id="fTel" placeholder="(11) 99999-9999" maxlength="15" autocomplete="tel" />
+          </div>
+          <div class="form-group">
+            <label for="fBairro">Bairro</label>
+            <select id="fBairro">
+              <option value="">Selecione o bairro…</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="fEndereco">Endereço</label>
+            <input type="text" id="fEndereco" placeholder="Rua, número, complemento" autocomplete="street-address" />
+          </div>
+          <div class="form-group">
+            <label>Forma de pagamento</label>
+            <div class="pgto-group">
+              <button class="pgto-btn" id="pgto-pix" onclick="selectPgto('pix')">🏦 Pix</button>
+              <button class="pgto-btn" id="pgto-entrega" onclick="selectPgto('entrega')">💵 Na entrega</button>
+            </div>
+          </div>
+
+          <div class="fidelidade-banner" id="fidelidadeBanner"></div>
+
+          <div class="checkout-summary">
+            <div class="summary-line"><span>Subtotal</span><span id="sumSubtotal">R$ 0,00</span></div>
+            <div class="summary-line"><span>Taxa de entrega</span><span id="sumTaxa">R$ --</span></div>
+            <div class="summary-line desconto" id="sumDescontoLine" style="display:none;"><span id="sumDescontoLabel">Desconto fidelidade</span><span id="sumDesconto">– R$ 0,00</span></div>
+            <div class="summary-line total"><span>Total</span><span id="sumTotal">R$ 0,00</span></div>
+          </div>
+
+          <button class="btn-primary" id="btnConfirm" onclick="confirmOrder()">Confirmar pedido</button>
+        </div>
+      </div>
+
+      <!-- Success Screen -->
+      <div id="successContent" style="display:none;">
+        <div class="success-screen">
+          <div class="icon">🎉</div>
+          <h2>Pedido confirmado!</h2>
+          <div class="order-num" id="successNum"></div>
+          <div class="tempo" id="successTempo"></div>
+          <div class="pix-block" id="pixBlock" style="display:none;">
+            <div id="pixLinkWrap"></div>
+            <div id="pixCodeWrap" class="pix-code-wrap" style="display:none;">
+              <input type="text" id="pixCodeInput" readonly />
+              <button class="btn-copy" onclick="copyPix()">Copiar</button>
+            </div>
+          </div>
+          <button class="btn-novo-pedido" onclick="resetAll()">Fazer novo pedido</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── State ──
+    let catalog = null;
+    let bairros = [];
+    let storeStatus = { aberta: true, tempo_entrega: '45' };
+    let activeTab = 'salgadas';
+    let isStoreOpen = true;
+
+    // Builder state
+    let builderPizza = null;    // { id, nome, tipo }
+    let builderTamanho = null;  // { id, nome, fatias, preco }
+    let builderSabores = [];    // [{ id, nome }]
+    let builderBorda = null;    // { id, nome, preco } | null
+
+    // Cart
+    let cart = [];
+    let cartAcomp = null; // { id, nome, preco } | null
+    let keyCounter = 0;
+
+    // Checkout
+    let fidDesconto = { desconto: 0, tipo: null, mensagem: null };
+    let selectedPgto = null;
+    let selectedBairroTaxa = null;
+
+    // ── Init ──
+    (async function init() {
+      await Promise.all([loadStatus(), loadCatalog(), loadBairros()]);
+    })();
+
+    async function loadStatus() {
+      try {
+        const res = await fetch('/api/loja/status');
+        if (res.ok) {
+          storeStatus = await res.json();
+          isStoreOpen = storeStatus.aberta !== false;
+        }
+      } catch (e) { /* assume open */ }
+
+      const heroStatus = document.getElementById('heroStatus');
+      if (storeStatus.horario) {
+        heroStatus.textContent = `Aberto hoje: ${storeStatus.horario}`;
+        heroStatus.style.display = 'inline-block';
+      } else if (storeStatus.tempo_entrega) {
+        heroStatus.textContent = `Tempo estimado: ~${storeStatus.tempo_entrega} min`;
+        heroStatus.style.display = 'inline-block';
+      }
+
+      if (!isStoreOpen) {
+        document.getElementById('closedBanner').style.display = 'block';
+        document.getElementById('menuWrapper').style.display = 'none';
+        document.getElementById('cartToggle').disabled = true;
+      }
+    }
+
+    async function loadCatalog() {
+      try {
+        const res = await fetch('/api/catalogo');
+        if (!res.ok) throw new Error();
+        catalog = await res.json();
+        renderPizzas('salgadas', catalog.PIZZAS?.salgadas || []);
+        renderPizzas('doces', catalog.PIZZAS?.doces || []);
+        renderAcompanhamentos(catalog.ACOMPANHAMENTOS || []);
+      } catch (e) {
+        document.getElementById('loading-salgadas').textContent = 'Erro ao carregar cardápio.';
+      }
+    }
+
+    async function loadBairros() {
+      try {
+        const res = await fetch('/api/bairros');
+        if (!res.ok) throw new Error();
+        bairros = await res.json();
+        const sel = document.getElementById('fBairro');
+        bairros.forEach(b => {
+          const opt = document.createElement('option');
+          opt.value = b.id;
+          opt.dataset.taxa = b.taxa;
+          opt.dataset.nome = b.nome;
+          opt.textContent = `${b.nome} — ${fmt(b.taxa)}`;
+          sel.appendChild(opt);
+        });
+      } catch (e) { /* ignore */ }
+    }
+
+    // ── Render ──
+    function renderPizzas(tipo, list) {
+      const grid = document.getElementById(`grid-${tipo}`);
+      const loading = document.getElementById(`loading-${tipo === 'salgadas' ? 'salgadas' : 'doces'}`);
+      if (loading) loading.style.display = 'none';
+
+      if (!list.length) {
+        grid.innerHTML = '<p style="color:var(--text-secondary);font-size:.88rem;">Nenhum item disponível.</p>';
+        return;
+      }
+      grid.innerHTML = '';
+      list.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'pizza-card';
+        card.innerHTML = `
+          <div class="emoji">${tipo === 'salgadas' ? '🍕' : '🍓'}</div>
+          <h3>${esc(p.nome)}</h3>
+          <button class="btn-personalizar" ${!isStoreOpen ? 'disabled' : ''}>Personalizar</button>`;
+        card.querySelector('.btn-personalizar').addEventListener('click', () => openBuilder(p.id, p.nome, tipo));
+        grid.appendChild(card);
+      });
+    }
+
+    function renderAcompanhamentos(list) {
+      const grid = document.getElementById('grid-acompanhamentos');
+      const loading = document.getElementById('loading-acomp');
+      if (loading) loading.style.display = 'none';
+
+      if (!list.length) {
+        grid.innerHTML = '<p style="color:var(--text-secondary);font-size:.88rem;">Nenhum acompanhamento disponível.</p>';
+        return;
+      }
+      grid.innerHTML = '';
+      list.forEach(a => {
+        const card = document.createElement('div');
+        card.className = 'acomp-card';
+        card.id = `acomp-card-${a.id}`;
+        card.innerHTML = `
+          <h3>${esc(a.nome)}</h3>
+          <div class="acomp-price">${fmt(a.preco)}</div>
+          <button class="btn-acomp" id="btn-acomp-${a.id}" ${!isStoreOpen ? 'disabled' : ''}>Adicionar</button>`;
+        card.querySelector('.btn-acomp').addEventListener('click', () => toggleAcomp(a));
+        grid.appendChild(card);
+      });
+    }
+
+    function toggleAcomp(a) {
+      if (cartAcomp && cartAcomp.id === a.id) {
+        // Remove
+        cartAcomp = null;
+      } else {
+        // Replace any existing acomp
+        if (cartAcomp) {
+          const prevBtn = document.getElementById(`btn-acomp-${cartAcomp.id}`);
+          if (prevBtn) { prevBtn.textContent = 'Adicionar'; prevBtn.classList.remove('remove'); }
+        }
+        cartAcomp = a;
+      }
+      const btn = document.getElementById(`btn-acomp-${a.id}`);
+      if (btn) {
+        const isSelected = cartAcomp && cartAcomp.id === a.id;
+        btn.textContent = isSelected ? 'Remover' : 'Adicionar';
+        btn.classList.toggle('remove', isSelected);
+      }
+      updateCartUI();
+    }
+
+    // ── Tabs ──
+    function switchTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll('.tab-btn').forEach((b, i) => {
+        const tabs = ['salgadas', 'doces', 'acompanhamentos'];
+        b.classList.toggle('active', tabs[i] === tab);
+      });
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById(`panel-${tab}`).classList.add('active');
+    }
+
+    // ── Builder ──
+    function openBuilder(pizzaId, pizzaNome, tipo) {
+      builderPizza = { id: pizzaId, nome: pizzaNome, tipo };
+      builderTamanho = null;
+      builderSabores = [{ id: pizzaId, nome: pizzaNome }];
+      builderBorda = null;
+
+      document.getElementById('builderTitle').textContent = pizzaNome;
+
+      // Render tamanhos
+      const tamanhos = catalog?.TAMANHOS || [];
+      const list = document.getElementById('tamanhoList');
+      list.innerHTML = '';
+      tamanhos.forEach(t => {
+        const div = document.createElement('div');
+        div.className = 'tamanho-option';
+        div.innerHTML = `
+          <input type="radio" name="tamanho" value="${t.id}" id="tam-${t.id}" />
+          <div class="tamanho-info">
+            <div class="tamanho-nome">${esc(t.nome)}</div>
+            <div class="tamanho-desc">${t.fatias} fatias</div>
+          </div>
+          <div class="tamanho-preco">${fmt(t.preco)}</div>`;
+        div.addEventListener('click', () => selectTamanho(t, div));
+        list.appendChild(div);
+      });
+
+      document.getElementById('btnStep1Next').disabled = true;
+      showStep('step1');
+      document.getElementById('builderOverlay').classList.add('open');
+    }
+
+    function selectTamanho(t, div) {
+      builderTamanho = t;
+      document.querySelectorAll('.tamanho-option').forEach(d => d.classList.remove('selected'));
+      div.classList.add('selected');
+      div.querySelector('input').checked = true;
+      document.getElementById('btnStep1Next').disabled = false;
+    }
+
+    function closeBuilder() {
+      document.getElementById('builderOverlay').classList.remove('open');
+    }
+
+    function showStep(id) {
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function goStep1() { showStep('step1'); }
+
+    function goStep2() {
+      if (!builderTamanho) return;
+      const maxSabores = builderTamanho.fatias >= 8 ? 2 : 1;
+      const tipo = builderPizza.tipo;
+      const pizzaList = tipo === 'salgadas' ? (catalog?.PIZZAS?.salgadas || []) : (catalog?.PIZZAS?.doces || []);
+
+      if (maxSabores === 1) {
+        // Auto-select current pizza, skip to step3 or add
+        builderSabores = [{ id: builderPizza.id, nome: builderPizza.nome }];
+        if (tipo === 'salgadas') { showStep('step3'); renderBordas(); }
+        else addToCart();
+        return;
+      }
+
+      document.getElementById('step2Title').textContent = 'Escolha os sabores';
+      document.getElementById('step2Hint').textContent = `Escolha até ${maxSabores} sabores`;
+
+      const saborList = document.getElementById('saborList');
+      saborList.innerHTML = '';
+      pizzaList.forEach(p => {
+        const isSelected = builderSabores.some(s => s.id === p.id);
+        const div = document.createElement('div');
+        div.className = `sabor-option${isSelected ? ' selected' : ''}`;
+        div.dataset.pid = p.id;
+        div.innerHTML = `
+          <input type="checkbox" id="sab-${p.id}" ${isSelected ? 'checked' : ''} />
+          <label class="sabor-nome" for="sab-${p.id}">${esc(p.nome)}</label>`;
+        div.addEventListener('click', (e) => toggleSabor(p, div, maxSabores, e));
+        saborList.appendChild(div);
+      });
+
+      updateSaborBtn();
+      showStep('step2');
+    }
+
+    function toggleSabor(p, div, maxSabores, e) {
+      e.preventDefault();
+      const isChecked = div.classList.contains('selected');
+      if (isChecked) {
+        builderSabores = builderSabores.filter(s => s.id !== p.id);
+        div.classList.remove('selected');
+        div.querySelector('input').checked = false;
+      } else {
+        if (builderSabores.length >= maxSabores) return;
+        builderSabores.push({ id: p.id, nome: p.nome });
+        div.classList.add('selected');
+        div.querySelector('input').checked = true;
+      }
+      // Disable unchosen when max reached
+      const all = document.querySelectorAll('.sabor-option');
+      all.forEach(d => {
+        const alreadySel = d.classList.contains('selected');
+        d.classList.toggle('disabled', !alreadySel && builderSabores.length >= maxSabores);
+      });
+      updateSaborBtn();
+    }
+
+    function updateSaborBtn() {
+      document.getElementById('btnStep2Next').disabled = builderSabores.length === 0;
+    }
+
+    function goStep3OrAdd() {
+      if (builderSabores.length === 0) return;
+      if (builderPizza.tipo === 'salgadas') {
+        renderBordas();
+        showStep('step3');
+      } else {
+        addToCart();
+      }
+    }
+
+    function renderBordas() {
+      builderBorda = null;
+      const bordas = catalog?.BORDAS || [];
+      const list = document.getElementById('bordaList');
+      list.innerHTML = '';
+
+      const semBtn = document.createElement('button');
+      semBtn.className = 'borda-btn selected';
+      semBtn.textContent = 'Sem borda';
+      semBtn.dataset.bid = 'none';
+      semBtn.addEventListener('click', () => selectBorda(null, semBtn));
+      list.appendChild(semBtn);
+
+      bordas.forEach(b => {
+        const btn = document.createElement('button');
+        btn.className = 'borda-btn';
+        btn.dataset.bid = b.id;
+        btn.textContent = `${b.nome} (+${fmt(b.preco)})`;
+        btn.addEventListener('click', () => selectBorda(b, btn));
+        list.appendChild(btn);
+      });
+    }
+
+    function selectBorda(b, btn) {
+      builderBorda = b;
+      document.querySelectorAll('.borda-btn').forEach(el => el.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+
+    function addToCart() {
+      if (!builderTamanho || builderSabores.length === 0) return;
+
+      let preco = builderTamanho.preco;
+      if (builderBorda) preco += builderBorda.preco;
+
+      const saborNomes = builderSabores.map(s => s.nome).join(' / ');
+      const bordaDesc = builderBorda ? ` + borda ${builderBorda.nome}` : '';
+      const desc = `${builderTamanho.nome} · ${saborNomes}${bordaDesc}`;
+
+      cart.push({
+        key: ++keyCounter,
+        tipo: 'pizza',
+        desc,
+        preco,
+        tamanho: builderTamanho,
+        sabores: [...builderSabores],
+        borda: builderBorda,
+        pizzaTipo: builderPizza.tipo
+      });
+
+      closeBuilder();
+      updateCartUI();
+
+      if (!document.getElementById('cartSidebar').classList.contains('open')) {
+        setTimeout(() => { if (cart.length) openCart(); }, 200);
+      }
+    }
+
+    // ── Cart ──
+    function openCart() {
+      document.getElementById('cartSidebar').classList.add('open');
+      document.getElementById('cartOverlay').classList.add('open');
+      document.body.classList.add('cart-open');
+    }
+
+    function closeCart() {
+      document.getElementById('cartSidebar').classList.remove('open');
+      document.getElementById('cartOverlay').classList.remove('open');
+      document.body.classList.remove('cart-open');
+    }
+
+    function toggleCart() {
+      const sidebar = document.getElementById('cartSidebar');
+      if (sidebar.classList.contains('open')) closeCart();
+      else openCart();
+    }
+
+    function removeCartItem(key) {
+      cart = cart.filter(i => i.key !== key);
+      updateCartUI();
+    }
+
+    function updateCartUI() {
+      const items = document.getElementById('cartItems');
+      const badge = document.getElementById('cartBadge');
+      const totalItems = cart.length + (cartAcomp ? 1 : 0);
+
+      badge.textContent = totalItems;
+      badge.classList.toggle('hidden', totalItems === 0);
+
+      if (!cart.length && !cartAcomp) {
+        items.innerHTML = '<div class="cart-empty">Seu carrinho está vazio.</div>';
+      } else {
+        items.innerHTML = '';
+        cart.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'cart-item';
+          div.innerHTML = `
+            <div class="cart-item-info">
+              <div class="cart-item-name">🍕 Pizza</div>
+              <div class="cart-item-desc">${esc(item.desc)}</div>
+            </div>
+            <div class="cart-item-price">${fmt(item.preco)}</div>
+            <button class="cart-remove-btn" title="Remover" onclick="removeCartItem(${item.key})">🗑️</button>`;
+          items.appendChild(div);
+        });
+        if (cartAcomp) {
+          const div = document.createElement('div');
+          div.className = 'cart-item';
+          div.innerHTML = `
+            <div class="cart-item-info">
+              <div class="cart-item-name">🥤 Acompanhamento</div>
+              <div class="cart-item-desc">${esc(cartAcomp.nome)}</div>
+            </div>
+            <div class="cart-item-price">${fmt(cartAcomp.preco)}</div>
+            <button class="cart-remove-btn" title="Remover" onclick="removeAcomp()">🗑️</button>`;
+          items.appendChild(div);
+        }
+      }
+
+      updateCartTotals();
+    }
+
+    function removeAcomp() {
+      if (cartAcomp) {
+        const prevBtn = document.getElementById(`btn-acomp-${cartAcomp.id}`);
+        if (prevBtn) { prevBtn.textContent = 'Adicionar'; prevBtn.classList.remove('remove'); }
+        cartAcomp = null;
+        updateCartUI();
+      }
+    }
+
+    function updateCartTotals() {
+      const subtotal = cart.reduce((s, i) => s + i.preco, 0) + (cartAcomp ? cartAcomp.preco : 0);
+      const taxa = selectedBairroTaxa !== null ? selectedBairroTaxa : null;
+      let desconto = 0;
+      if (fidDesconto.desconto > 0) {
+        if (fidDesconto.tipo === 'percentual') desconto = subtotal * fidDesconto.desconto / 100;
+        else desconto = fidDesconto.desconto;
+      }
+      const total = subtotal + (taxa || 0) - desconto;
+
+      document.getElementById('cartSubtotal').textContent = fmt(subtotal);
+      document.getElementById('cartTaxa').textContent = taxa !== null ? fmt(taxa) : 'R$ --';
+      document.getElementById('cartTotal').textContent = fmt(total);
+
+      const descontoLine = document.getElementById('cartDescontoLine');
+      if (desconto > 0) {
+        descontoLine.style.display = 'flex';
+        document.getElementById('cartDesconto').textContent = `– ${fmt(desconto)}`;
+        if (fidDesconto.mensagem) document.getElementById('cartDescontoLabel').textContent = 'Desconto fidelidade';
+      } else {
+        descontoLine.style.display = 'none';
+      }
+    }
+
+    // ── Checkout ──
+    function openCheckout() {
+      if (!cart.length && !cartAcomp) {
+        alert('Adicione pelo menos um item ao carrinho!');
+        return;
+      }
+      closeCart();
+      document.getElementById('checkoutContent').style.display = 'block';
+      document.getElementById('successContent').style.display = 'none';
+      selectedPgto = null;
+      document.querySelectorAll('.pgto-btn').forEach(b => b.classList.remove('selected'));
+      updateCheckoutSummary();
+      document.getElementById('checkoutOverlay').classList.add('open');
+    }
+
+    function closeCheckout() {
+      document.getElementById('checkoutOverlay').classList.remove('open');
+    }
+
+    function selectPgto(p) {
+      selectedPgto = p;
+      document.getElementById('pgto-pix').classList.toggle('selected', p === 'pix');
+      document.getElementById('pgto-entrega').classList.toggle('selected', p === 'entrega');
+    }
+
+    function updateCheckoutSummary() {
+      const subtotal = cart.reduce((s, i) => s + i.preco, 0) + (cartAcomp ? cartAcomp.preco : 0);
+      let desconto = 0;
+      if (fidDesconto.desconto > 0) {
+        if (fidDesconto.tipo === 'percentual') desconto = subtotal * fidDesconto.desconto / 100;
+        else desconto = fidDesconto.desconto;
+      }
+      const total = subtotal + (selectedBairroTaxa || 0) - desconto;
+
+      document.getElementById('sumSubtotal').textContent = fmt(subtotal);
+      document.getElementById('sumTaxa').textContent = selectedBairroTaxa !== null ? fmt(selectedBairroTaxa) : 'R$ --';
+      document.getElementById('sumTotal').textContent = fmt(total);
+
+      const descontoLine = document.getElementById('sumDescontoLine');
+      if (desconto > 0) {
+        descontoLine.style.display = 'flex';
+        document.getElementById('sumDesconto').textContent = `– ${fmt(desconto)}`;
+      } else {
+        descontoLine.style.display = 'none';
+      }
+    }
+
+    // Phone mask
+    document.getElementById('fTel').addEventListener('input', function() {
+      let v = this.value.replace(/\D/g, '').slice(0, 11);
+      if (v.length > 6) v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+      else if (v.length > 2) v = `(${v.slice(0,2)}) ${v.slice(2)}`;
+      else if (v.length > 0) v = `(${v}`;
+      this.value = v;
+    });
+
+    document.getElementById('fTel').addEventListener('blur', async function() {
+      const digits = this.value.replace(/\D/g, '');
+      if (digits.length < 10) return;
+      try {
+        const [lookupRes, fidRes] = await Promise.all([
+          fetch(`/api/clientes/lookup?tel=${digits}`),
+          fetch(`/api/fidelidade/check?tel=${digits}`)
+        ]);
+        if (lookupRes.ok) {
+          const data = await lookupRes.json();
+          if (data.encontrado) {
+            if (data.nome && !document.getElementById('fNome').value) document.getElementById('fNome').value = data.nome;
+            if (data.endereco) document.getElementById('fEndereco').value = data.endereco;
+          }
+        }
+        if (fidRes.ok) {
+          const fid = await fidRes.json();
+          fidDesconto = { desconto: fid.desconto || 0, tipo: fid.tipo || null, mensagem: fid.mensagem || null };
+          const banner = document.getElementById('fidelidadeBanner');
+          if (fidDesconto.desconto > 0 && fidDesconto.mensagem) {
+            banner.textContent = `🎉 ${fidDesconto.mensagem}`;
+            banner.classList.add('visible');
+          } else {
+            banner.classList.remove('visible');
+          }
+          updateCheckoutSummary();
+          updateCartTotals();
+        }
+      } catch (e) { /* ignore */ }
+    });
+
+    document.getElementById('fBairro').addEventListener('change', function() {
+      const opt = this.options[this.selectedIndex];
+      if (opt && opt.dataset.taxa !== undefined && opt.value) {
+        selectedBairroTaxa = parseFloat(opt.dataset.taxa) || 0;
+      } else {
+        selectedBairroTaxa = null;
+      }
+      updateCheckoutSummary();
+      updateCartTotals();
+    });
+
+    async function confirmOrder() {
+      const nome = document.getElementById('fNome').value.trim();
+      const tel = document.getElementById('fTel').value.replace(/\D/g, '');
+      const bairroSel = document.getElementById('fBairro');
+      const bairroOpt = bairroSel.options[bairroSel.selectedIndex];
+      const endereco = document.getElementById('fEndereco').value.trim();
+
+      if (!nome) { alert('Por favor, informe seu nome.'); return; }
+      if (tel.length < 10) { alert('Informe um celular válido com DDD.'); return; }
+      if (!bairroSel.value) { alert('Selecione o bairro para entrega.'); return; }
+      if (!endereco) { alert('Informe o endereço de entrega.'); return; }
+      if (!selectedPgto) { alert('Selecione a forma de pagamento.'); return; }
+
+      const bairroNome = bairroOpt ? bairroOpt.dataset.nome : '';
+      const enderecoCompleto = `${endereco}, ${bairroNome}`;
+
+      const subtotal = cart.reduce((s, i) => s + i.preco, 0) + (cartAcomp ? cartAcomp.preco : 0);
+      let desconto = 0;
+      if (fidDesconto.desconto > 0) {
+        if (fidDesconto.tipo === 'percentual') desconto = subtotal * fidDesconto.desconto / 100;
+        else desconto = fidDesconto.desconto;
+      }
+      const total = subtotal + (selectedBairroTaxa || 0) - desconto;
+
+      const body = {
+        nome,
+        telefone: tel,
+        endereco: enderecoCompleto,
+        pizzas: cart.map(item => ({
+          tamanho: item.tamanho,
+          tipo: item.pizzaTipo,
+          sabores: item.sabores,
+          borda: item.borda || null
+        })),
+        acompanhamento: cartAcomp || null,
+        pagamento: selectedPgto,
+        total: parseFloat(total.toFixed(2))
+      };
+
+      const btn = document.getElementById('btnConfirm');
+      btn.disabled = true;
+      btn.textContent = 'Enviando…';
+
+      try {
+        const res = await fetch('/api/pedidos/web', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error('Erro ao enviar pedido');
+        const data = await res.json();
+        showSuccess(data);
+      } catch (e) {
+        alert('Erro ao confirmar pedido. Tente novamente.');
+        btn.disabled = false;
+        btn.textContent = 'Confirmar pedido';
+      }
+    }
+
+    function showSuccess(data) {
+      document.getElementById('checkoutContent').style.display = 'none';
+      const successEl = document.getElementById('successContent');
+      successEl.style.display = 'block';
+
+      document.getElementById('successNum').textContent = `Pedido #${data.numero || ''}`;
+      document.getElementById('successTempo').textContent = `Tempo estimado: ${storeStatus.tempo_entrega || 45} min`;
+
+      const pixBlock = document.getElementById('pixBlock');
+      if (selectedPgto === 'pix' && (data.checkout_url || data.pix_code)) {
+        pixBlock.style.display = 'block';
+        if (data.checkout_url) {
+          document.getElementById('pixLinkWrap').innerHTML = `<a href="${data.checkout_url}" target="_blank" class="btn-pix-link">💳 Pagar via Pix</a>`;
+        }
+        if (data.pix_code) {
+          const wrap = document.getElementById('pixCodeWrap');
+          wrap.style.display = 'flex';
+          document.getElementById('pixCodeInput').value = data.pix_code;
+        }
+      } else {
+        pixBlock.style.display = 'none';
+      }
+    }
+
+    function copyPix() {
+      const input = document.getElementById('pixCodeInput');
+      input.select();
+      navigator.clipboard.writeText(input.value).catch(() => {
+        document.execCommand('copy');
+      });
+      const btn = document.querySelector('.btn-copy');
+      btn.textContent = 'Copiado!';
+      setTimeout(() => { btn.textContent = 'Copiar'; }, 2000);
+    }
+
+    function resetAll() {
+      cart = [];
+      cartAcomp = null;
+      selectedBairroTaxa = null;
+      fidDesconto = { desconto: 0, tipo: null, mensagem: null };
+      selectedPgto = null;
+
+      document.getElementById('fNome').value = '';
+      document.getElementById('fTel').value = '';
+      document.getElementById('fBairro').value = '';
+      document.getElementById('fEndereco').value = '';
+      document.getElementById('fidelidadeBanner').classList.remove('visible');
+      document.querySelectorAll('.pgto-btn').forEach(b => b.classList.remove('selected'));
+
+      // Reset acomp buttons
+      document.querySelectorAll('.btn-acomp').forEach(b => {
+        b.textContent = 'Adicionar';
+        b.classList.remove('remove');
+      });
+
+      updateCartUI();
+      closeCheckout();
+    }
+
+    // ── Helpers ──
+    function fmt(v) {
+      return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Close modals on overlay click
+    document.getElementById('builderOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closeBuilder();
+    });
+    document.getElementById('checkoutOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closeCheckout();
+    });
+
+    // ESC key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeBuilder();
+        closeCheckout();
+        closeCart();
+      }
+    });
+  </script>
+</body>
+</html>

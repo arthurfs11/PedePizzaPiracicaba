@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pede Pizza — Entregadores</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .ent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .ent-card {
+      background: #fff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: box-shadow .15s;
+    }
+    .ent-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+    .ent-card.inativo { opacity: .5; }
+
+    .ent-card-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .ent-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: #fff7ed;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+    .ent-info { flex: 1; min-width: 0; }
+    .ent-nome { font-size: .95rem; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ent-tel  { font-size: .78rem; color: #64748b; margin-top: 2px; }
+
+    .ent-status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge-status {
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+    .badge-disponivel { background: #dcfce7; color: #15803d; }
+    .badge-ocupado    { background: #fef9c3; color: #854d0e; }
+    .badge-inativo    { background: #f1f5f9; color: #94a3b8; }
+    .ent-pedidos-ativos { font-size: .75rem; color: #64748b; margin-left: auto; }
+
+    .ent-actions { display: flex; gap: 6px; margin-top: 4px; }
+    .btn-ent { border: none; border-radius: 7px; padding: 5px 12px; font-size: .75rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: opacity .15s; }
+    .btn-ent:hover { opacity: .75; }
+    .btn-ent-edit     { background: #dbeafe; color: #1d4ed8; }
+    .btn-ent-toggle   { background: #fef9c3; color: #854d0e; }
+    .btn-ent-delete   { background: #fee2e2; color: #b91c1c; }
+    .btn-ent-status   { background: #dcfce7; color: #15803d; }
+
+    .add-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 20px;
+    }
+    .btn-add-entregador {
+      background: #f97316; color: #fff; border: none; border-radius: 9px;
+      padding: 10px 20px; font-size: .85rem; font-weight: 700; font-family: inherit;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+    }
+    .btn-add-entregador:hover { opacity: .88; }
+
+    .summary-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .summary-pill {
+      border-radius: 8px; padding: 8px 16px; font-size: .8rem; font-weight: 600; display: flex; align-items: center; gap: 6px;
+    }
+    .pill-disp  { background: #dcfce7; color: #15803d; }
+    .pill-ocup  { background: #fef9c3; color: #854d0e; }
+    .pill-inat  { background: #f1f5f9; color: #64748b; }
+
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal-box { background: #fff; border-radius: 14px; padding: 28px; width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+    .modal-title { font-size: 1rem; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+    .btn-modal-cancel { background: #f1f5f9; color: #475569; border: none; border-radius: 8px; padding: 10px 18px; font-size: .85rem; font-weight: 600; font-family: inherit; cursor: pointer; }
+    .btn-modal-cancel:hover { background: #e2e8f0; }
+    .btn-modal-salvar { background: #f97316; color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-size: .85rem; font-weight: 700; font-family: inherit; cursor: pointer; }
+    .btn-modal-salvar:hover { opacity: .88; }
+    .feedback-inline { border-radius: 8px; padding: 9px 12px; font-size: .8rem; font-weight: 500; margin-top: 10px; display: none; }
+    .fi-err { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+    .fi-ok  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }
+
+    .empty-ent {
+      text-align: center; padding: 48px 24px; color: #94a3b8;
+      background: #fff; border: 1.5px dashed #e2e8f0; border-radius: 14px;
+    }
+    .empty-ent p { margin: 8px 0 0; font-size: .88rem; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-brand">
+      <span class="header-logo">🍕</span>
+      <div>
+        <h1 class="header-title">Pede Pizza Piracicaba</h1>
+        <p class="header-sub">Gestão de Entregadores</p>
+      </div>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <a href="/home"         class="nav-link">🏠 Início</a>
+    <a href="/"             class="nav-link">📋 Pedidos</a>
+    <a href="/relatorios"   class="nav-link">📊 Relatórios</a>
+    <a href="/suporte"      class="nav-link">🎧 Suporte</a>
+    <a href="/usuarios"     class="nav-link" id="nav-admin"         style="display:none">👥 Usuários</a>
+    <a href="/catalogo"     class="nav-link" id="nav-catalogo"      style="display:none">🍕 Cardápio</a>
+    <a href="/clientes"     class="nav-link" id="nav-clientes"      style="display:none">👤 Clientes</a>
+    <a href="/configuracoes"class="nav-link" id="nav-config"        style="display:none">⚙️ Configurações</a>
+    <a href="/entregadores" class="nav-link active" id="nav-entregadores">🛵 Entregadores</a>
+    <button onclick="fazerLogout()" class="nav-logout">Sair</button>
+  </nav>
+
+  <main class="page-content">
+    <h2 class="page-title">🛵 Entregadores</h2>
+    <p style="color:#64748b;font-size:.85rem;margin-bottom:20px">
+      Gerencie os entregadores da loja. O sistema atribui automaticamente o primeiro disponível quando um pedido sai para entrega.
+    </p>
+
+    <div class="summary-row" id="summary-row"></div>
+
+    <div class="add-row">
+      <button class="btn-add-entregador" onclick="abrirModal()">➕ Novo Entregador</button>
+    </div>
+
+    <div class="ent-grid" id="ent-grid"></div>
+    <div class="empty-ent" id="ent-empty" style="display:none">
+      <div style="font-size:2.5rem">🛵</div>
+      <p>Nenhum entregador cadastrado ainda.</p>
+      <p>Clique em <strong>Novo Entregador</strong> para começar.</p>
+    </div>
+  </main>
+
+  <!-- Modal add/edit -->
+  <div class="modal-overlay" id="modal-ent">
+    <div class="modal-box">
+      <div class="modal-title" id="modal-ent-title">Novo Entregador</div>
+      <input type="hidden" id="ent-id-val" />
+
+      <div class="form-group">
+        <label class="form-label">Nome *</label>
+        <input type="text" id="ent-nome" class="form-control" placeholder="Ex: João Silva" maxlength="80" />
+      </div>
+      <div class="form-group" style="margin-top:14px">
+        <label class="form-label">Telefone</label>
+        <input type="tel" id="ent-tel" class="form-control" placeholder="(19) 99999-9999" maxlength="20" />
+      </div>
+
+      <div class="feedback-inline" id="fi-ent"></div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="fecharModal()">Cancelar</button>
+        <button class="btn-modal-salvar" onclick="salvarEntregador()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function escHtml(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    async function fazerLogout() {
+      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      window.location.href = '/login';
+    }
+    function showFI(id, msg, ok) {
+      const el = document.getElementById(id);
+      el.textContent = msg; el.className = `feedback-inline ${ok ? 'fi-ok' : 'fi-err'}`; el.style.display = 'block';
+    }
+    function hideFI(id) { const el = document.getElementById(id); el.style.display = 'none'; }
+
+    let _todos = []; // inclui inativos para admin ver
+
+    async function carregar() {
+      const r = await fetch('/api/entregadores?todos=1').catch(() => null);
+      if (!r?.ok) return;
+      _todos = await r.json();
+      renderizar();
+    }
+
+    function renderizar() {
+      const grid  = document.getElementById('ent-grid');
+      const empty = document.getElementById('ent-empty');
+      const ativos = _todos.filter(e => e.ativo);
+      const inativos = _todos.filter(e => !e.ativo);
+
+      // Summary
+      const disp = ativos.filter(e => e.status === 'disponivel').length;
+      const ocup = ativos.filter(e => e.status === 'ocupado').length;
+      document.getElementById('summary-row').innerHTML = `
+        <div class="summary-pill pill-disp">✅ ${disp} disponível${disp !== 1 ? "" : ''}</div>
+        <div class="summary-pill pill-ocup">🚚 ${ocup} em entrega</div>
+        ${inativos.length ? `<div class="summary-pill pill-inat">⏸ ${inativos.length} inativo${inativos.length !== 1 ? 's' : ''}</div>` : ''}
+      `;
+
+      if (_todos.length === 0) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+
+      grid.innerHTML = _todos.map(e => {
+        const statusBadge = !e.ativo
+          ? `<span class="badge-status badge-inativo">Inativo</span>`
+          : e.status === 'disponivel'
+            ? `<span class="badge-status badge-disponivel">✅ Disponível</span>`
+            : `<span class="badge-status badge-ocupado">🚚 Em entrega</span>`;
+
+        const pedidosLabel = e.ativo && e.pedidos_ativos > 0
+          ? `<span class="ent-pedidos-ativos">${e.pedidos_ativos} pedido${e.pedidos_ativos > 1 ? 's' : ''} ativo${e.pedidos_ativos > 1 ? 's' : ''}</span>`
+          : '';
+
+        const btnToggleStatus = e.ativo && e.status === 'disponivel'
+          ? `<button class="btn-ent btn-ent-toggle" onclick="toggleStatus(${e.id},'ocupado')">🚚 Marcar em entrega</button>`
+          : e.ativo && e.status === 'ocupado'
+            ? `<button class="btn-ent btn-ent-status" onclick="toggleStatus(${e.id},'disponivel')">✅ Marcar disponível</button>`
+            : '';
+
+        const btnToggleAtivo = e.ativo
+          ? `<button class="btn-ent btn-ent-toggle" onclick="toggleAtivo(${e.id}, false)" title="Desativar">⏸ Desativar</button>`
+          : `<button class="btn-ent btn-ent-status" onclick="toggleAtivo(${e.id}, true)" title="Reativar">▶ Reativar</button>`;
+
+        return `
+          <div class="ent-card ${e.ativo ? '' : 'inativo'}">
+            <div class="ent-card-top">
+              <div class="ent-avatar">🛵</div>
+              <div class="ent-info">
+                <div class="ent-nome">${escHtml(e.nome)}</div>
+                <div class="ent-tel">${e.telefone ? `📞 ${escHtml(e.telefone)}` : '<span style="color:#cbd5e1">Sem telefone</span>'}</div>
+              </div>
+            </div>
+            <div class="ent-status-row">${statusBadge}${pedidosLabel}</div>
+            <div class="ent-actions">
+              <button class="btn-ent btn-ent-edit"   onclick="abrirModal(${e.id})">✏️ Editar</button>
+              ${btnToggleStatus}
+              ${btnToggleAtivo}
+              <button class="btn-ent btn-ent-delete" onclick="excluir(${e.id}, '${escHtml(e.nome)}')">🗑</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function abrirModal(id) {
+      hideFI('fi-ent');
+      const e = id ? _todos.find(x => x.id === id) : null;
+      document.getElementById('modal-ent-title').textContent = e ? 'Editar Entregador' : 'Novo Entregador';
+      document.getElementById('ent-id-val').value  = e ? e.id : '';
+      document.getElementById('ent-nome').value    = e ? e.nome : '';
+      document.getElementById('ent-tel').value     = e ? (e.telefone || '') : '';
+      document.getElementById('modal-ent').classList.add('open');
+      document.getElementById('ent-nome').focus();
+    }
+
+    function fecharModal() { document.getElementById('modal-ent').classList.remove('open'); }
+
+    async function salvarEntregador() {
+      hideFI('fi-ent');
+      const id   = document.getElementById('ent-id-val').value;
+      const nome = document.getElementById('ent-nome').value.trim();
+      const tel  = document.getElementById('ent-tel').value.trim();
+
+      if (!nome) { showFI('fi-ent', '❌ Nome é obrigatório.', false); return; }
+
+      const method = id ? 'PATCH' : 'POST';
+      const url    = id ? `/api/entregadores/${id}` : '/api/entregadores';
+      const r = await fetch(url, {
+        method, headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, telefone: tel || null }),
+      }).catch(() => null);
+
+      if (r?.ok) {
+        fecharModal();
+        await carregar();
+      } else {
+        const d = r ? await r.json().catch(() => ({})) : {};
+        showFI('fi-ent', `❌ ${d.erro || 'Erro ao salvar.'}`, false);
+      }
+    }
+
+    async function toggleStatus(id, novoStatus) {
+      await fetch(`/api/entregadores/${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: novoStatus }),
+      }).catch(() => null);
+      await carregar();
+    }
+
+    async function toggleAtivo(id, ativo) {
+      await fetch(`/api/entregadores/${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ativo }),
+      }).catch(() => null);
+      await carregar();
+    }
+
+    async function excluir(id, nome) {
+      if (!confirm(`Excluir o entregador "${nome}" permanentemente?`)) return;
+      await fetch(`/api/entregadores/${id}`, { method: 'DELETE' }).catch(() => null);
+      await carregar();
+    }
+
+    document.getElementById('modal-ent').addEventListener('click', function(e) {
+      if (e.target === this) fecharModal();
+    });
+    document.getElementById('ent-nome').addEventListener('keydown', e => { if (e.key === 'Enter') salvarEntregador(); });
+
+    (async () => {
+      const me = await fetch('/api/auth/me').then(r => r.json()).catch(() => null);
+      if (!me || (me.papel !== 'admin' && me.papel !== 'super_admin')) {
+        window.location.href = '/'; return;
+      }
+      ['nav-admin','nav-catalogo','nav-clientes','nav-config','nav-entregadores'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.style.display = '';
+      });
+      await carregar();
+    })();
+  </script>
+</body>
+</html>

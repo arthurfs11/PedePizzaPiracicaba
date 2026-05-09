@@ -49,11 +49,12 @@ function kbSabores(tipo, excluirId = null) {
 
 function kbAcompanhamento() {
   return {
-    inline_keyboard: [
-      [{ text: '🥤 Refrigerante 2L (+R$12,00)', callback_data: 'ac_ref' }],
-      [{ text: '🍹 Suco 1L (+R$8,00)',          callback_data: 'ac_suc' }],
-      [{ text: '❌ Sem acompanhamento',           callback_data: 'ac_nan' }],
-    ],
+    inline_keyboard: ACOMPANHAMENTOS.map(a => [{
+      text: a.preco > 0
+        ? `🥤 ${a.nome} (+R$${a.preco.toFixed(2).replace('.', ',')})`
+        : `❌ ${a.nome}`,
+      callback_data: `ac_${a.id}`,
+    }]),
   };
 }
 
@@ -116,6 +117,15 @@ function kbBordaSabor() {
   };
 }
 
+function kbConfirmarEndereco() {
+  return {
+    inline_keyboard: [[
+      { text: '✅ Sim, usar este endereço', callback_data: 'addr_y' },
+      { text: '❌ Não, informar novo',      callback_data: 'addr_n' },
+    ]],
+  };
+}
+
 module.exports = {
   kbTipoPizza,
   kbTamanho,
@@ -128,4 +138,5 @@ module.exports = {
   kbIniciar,
   kbBorda,
   kbBordaSabor,
+  kbConfirmarEndereco,
 };

@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Pede Pizza — Fazer Pedido</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --header: #1a1a2e;
+      --laranja: #f97316;
+      --laranja-d: #ea6a0a;
+      --bg: #f0f2f5;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --muted: #64748b;
+      --radius: 16px;
+    }
+
+    html { height: 100%; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Wrapper ── */
+    #chat-wrap {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 480px;
+      height: 100dvh;
+      background: var(--surface);
+      position: relative;
+    }
+
+    /* Desktop: card flutuante */
+    @media (min-width: 640px) {
+      body { padding: 24px; }
+      #chat-wrap {
+        height: min(820px, calc(100dvh - 48px));
+        border-radius: var(--radius);
+        box-shadow: 0 24px 64px rgba(0,0,0,.18);
+        overflow: hidden;
+      }
+    }
+
+    /* ── Header ── */
+    #chat-header {
+      background: var(--header);
+      color: #fff;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    #chat-avatar {
+      width: 42px; height: 42px;
+      background: var(--laranja);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+    .ch-nome   { font-weight: 800; font-size: .97rem; }
+    .ch-status { font-size: .72rem; color: #94a3b8; margin-top: 1px; }
+    #ch-status-txt { transition: color .3s; }
+    #ch-status-txt.online  { color: #4ade80; }
+    #ch-status-txt.concluido { color: #4ade80; }
+
+    /* ── Mensagens ── */
+    #chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: var(--bg);
+    }
+
+    .msg {
+      max-width: 80%;
+      padding: 10px 14px;
+      font-size: .88rem;
+      line-height: 1.55;
+      word-break: break-word;
+      animation: pop .18s ease;
+    }
+    @keyframes pop {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .msg-bot {
+      background: var(--surface);
+      color: var(--text);
+      align-self: flex-start;
+      border-radius: 4px 16px 16px 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.07);
+    }
+    .msg-user {
+      background: var(--laranja);
+      color: #fff;
+      align-self: flex-end;
+      border-radius: 16px 4px 16px 16px;
+    }
+
+    /* Typing */
+    .typing {
+      display: inline-flex; gap: 4px; align-items: center;
+      padding: 11px 16px;
+      background: var(--surface);
+      border-radius: 4px 16px 16px 16px;
+      align-self: flex-start;
+      box-shadow: 0 1px 3px rgba(0,0,0,.07);
+    }
+    .typing span {
+      width: 7px; height: 7px; background: #94a3b8;
+      border-radius: 50%; animation: blink 1.1s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: .18s; }
+    .typing span:nth-child(3) { animation-delay: .36s; }
+    @keyframes blink {
+      0%,80%,100% { transform: scale(.85); opacity:.4; }
+      40% { transform: scale(1.15); opacity:1; }
+    }
+
+    /* Resumo */
+    .msg-resumo {
+      align-self: flex-start;
+      max-width: 88%;
+      background: #fffbf5;
+      border: 1.5px solid #fed7aa;
+      border-radius: 4px 16px 16px 16px;
+      padding: 14px;
+      font-size: .82rem;
+      line-height: 1.6;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      animation: pop .18s ease;
+    }
+    .msg-resumo hr { border: none; border-top: 1px dashed #fed7aa; margin: 8px 0; }
+    .msg-resumo .total { font-weight: 800; font-size: .95rem; color: var(--laranja); margin-top: 6px; }
+
+    /* Pix */
+    .msg-pix {
+      align-self: flex-start;
+      max-width: 88%;
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: 4px 16px 16px 16px;
+      padding: 16px;
+      font-size: .83rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      animation: pop .18s ease;
+    }
+    .msg-pix .pix-titulo { font-weight: 800; color: #15803d; margin-bottom: 10px; font-size: .9rem; }
+    .msg-pix .pix-code {
+      background: #fff; border: 1px solid #bbf7d0;
+      border-radius: 8px; padding: 10px;
+      font-family: monospace; font-size: .72rem;
+      word-break: break-all; line-height: 1.5;
+      color: #374151; margin-bottom: 10px;
+      max-height: 72px; overflow-y: auto;
+    }
+    .btn-copiar {
+      display: flex; align-items: center; gap: 6px;
+      padding: 9px 16px; width: 100%;
+      background: #16a34a; color: #fff;
+      border: none; border-radius: 10px;
+      font-size: .83rem; font-weight: 700;
+      cursor: pointer; justify-content: center;
+      font-family: inherit; transition: background .15s;
+    }
+    .btn-copiar:hover { background: #15803d; }
+    .pix-instrucao { margin-top: 10px; color: #64748b; font-size: .77rem; line-height: 1.5; }
+    .btn-checkout {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 11px 20px; width: 100%;
+      background: var(--laranja); color: #fff;
+      border: none; border-radius: 10px;
+      font-size: .88rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      text-decoration: none; margin-top: 4px;
+      transition: background .15s;
+    }
+    .btn-checkout:hover { background: var(--laranja-d); }
+
+    /* Sucesso */
+    .msg-sucesso {
+      align-self: center;
+      max-width: 90%;
+      background: var(--surface);
+      border: 1.5px solid #86efac;
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      font-size: .88rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      animation: pop .25s ease;
+    }
+    .msg-sucesso .numero { font-size: 1.1rem; font-weight: 800; color: var(--laranja); margin: 6px 0; }
+    .msg-sucesso .eta { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+
+    /* ── Quick replies ── */
+    #quick-replies {
+      padding: 8px 12px 4px;
+      display: flex; flex-wrap: wrap; gap: 7px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    #quick-replies:empty { padding: 0; border-top: none; }
+
+    .qr {
+      padding: 8px 14px;
+      border: 2px solid var(--laranja);
+      background: #fff;
+      color: var(--laranja);
+      border-radius: 20px;
+      font-size: .82rem; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      transition: all .13s; white-space: nowrap;
+    }
+    .qr:hover, .qr.sel { background: var(--laranja); color: #fff; }
+    .qr.ok { background: #16a34a; color: #fff; border-color: #16a34a; }
+    .qr.ok:hover { background: #15803d; border-color: #15803d; }
+    .qr.danger { border-color: #64748b; color: #64748b; }
+    .qr.danger:hover { background: #64748b; color: #fff; }
+
+    /* ── Input ── */
+    #input-area {
+      padding: 10px 12px 14px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex; gap: 8px;
+      flex-shrink: 0;
+    }
+    #txt {
+      flex: 1; padding: 11px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 24px;
+      font-size: .88rem; font-family: inherit;
+      outline: none; transition: border-color .15s;
+      background: var(--surface);
+    }
+    #txt:focus { border-color: var(--laranja); }
+    #txt:disabled { background: #f8fafc; cursor: not-allowed; }
+    #send {
+      width: 44px; height: 44px; flex-shrink: 0;
+      background: var(--laranja); color: #fff;
+      border: none; border-radius: 50%;
+      font-size: 1.05rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s;
+    }
+    #send:hover { background: var(--laranja-d); }
+    #send:disabled { background: #cbd5e1; cursor: not-allowed; }
+  </style>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+<div id="notif-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:100;background:#1a1a2e;color:#fff;font-size:.8rem;text-align:center;padding:8px 16px;font-family:Inter,sans-serif">
+  🔔 Mantenha esta página aberta para receber atualizações do seu pedido em tempo real.
+</div>
+<div id="chat-wrap">
+
+  <div id="chat-header">
+    <div id="chat-avatar">🍕</div>
+    <div>
+      <div class="ch-nome">Pede Pizza Piracicaba</div>
+      <div class="ch-status"><span id="ch-status-txt" class="online">🟢 Online · Fazendo pedidos</span></div>
+    </div>
+  </div>
+
+  <div id="chat-body"></div>
+  <div id="quick-replies"></div>
+
+  <div id="input-area">
+    <input id="txt" type="text" placeholder="Digite aqui..." autocomplete="off" />
+    <button id="send" onclick="enviar()">➤</button>
+  </div>
+
+</div>
+<script>
+/* ── Estado ── */
+let estado       = 'inicio';
+let catalogo     = null;
+let _tempoEntrega = '45';
+let sessao   = { nome:null, telefone:null, endereco:null, pizzas:[], pizzaAtual:null, acompanhamento:null, pagamento:null };
+let _sabores = [], _maxSab = 1;
+
+/* ── Socket.io ── */
+const socket = io({ transports: ['websocket','polling'] });
+socket.on('status_pedido', ({ status, numero }) => {
+  const labels = {
+    recebido:     '✅ Pedido recebido!',
+    em_andamento: '🍕 Em preparo',
+    em_entrega:   '🛵 Saiu para entrega!',
+    concluido:    '✅ Entregue!',
+  };
+  const label = labels[status] || status;
+  const statusEl = document.getElementById('ch-status-txt');
+  if (statusEl) statusEl.textContent = label;
+  addMsg(`📦 Atualização do pedido #${numero}: ${label}`, 'bot');
+  if (Notification.permission === 'granted') {
+    new Notification('Pede Pizza — Atualização', { body: `Pedido #${numero}: ${label}`, icon: '' });
+  }
+  if (status === 'concluido') {
+    document.getElementById('notif-banner').style.display = 'none';
+  }
+});
+
+/* ── Refs ── */
+const $body = document.getElementById('chat-body');
+const $qr   = document.getElementById('quick-replies');
+const $txt  = document.getElementById('txt');
+const $send = document.getElementById('send');
+
+/* ── Scroll ── */
+const scroll = () => setTimeout(() => { $body.scrollTop = $body.scrollHeight; }, 30);
+
+/* ── Input state ── */
+function setInput(on, ph = 'Digite aqui...') {
+  $txt.disabled = $send.disabled = !on;
+  $txt.placeholder = ph;
+  if (on) setTimeout(() => $txt.focus(), 80);
+}
+
+/* ── Mensagens ── */
+function addMsg(txt, tipo = 'bot') {
+  const d = document.createElement('div');
+  d.className = `msg msg-${tipo}`;
+  d.textContent = txt;
+  $body.appendChild(d); scroll();
+}
+
+function addRaw(html, cls) {
+  const d = document.createElement('div');
+  d.className = cls;
+  d.innerHTML = html;
+  $body.appendChild(d); scroll();
+  return d;
+}
+
+let _typingEl = null;
+function showTyping() {
+  _typingEl = document.createElement('div');
+  _typingEl.className = 'typing';
+  _typingEl.innerHTML = '<span></span><span></span><span></span>';
+  $body.appendChild(_typingEl); scroll();
+}
+function hideTyping() { _typingEl?.remove(); _typingEl = null; }
+
+function bot(txt, delay = 550) {
+  return new Promise(r => { showTyping(); setTimeout(() => { hideTyping(); addMsg(txt,'bot'); r(); }, delay); });
+}
+
+/* ── Quick replies ── */
+function setQR(list) {
+  $qr.innerHTML = '';
+  list.forEach(o => {
+    const b = document.createElement('button');
+    b.className = 'qr' + (o.cls ? ' '+o.cls : '');
+    b.textContent = o.label;
+    b.onclick = () => o.fn(o.val ?? o.label, o.label);
+    $qr.appendChild(b);
+  });
+}
+function clearQR() { $qr.innerHTML = ''; }
+
+/* ── Masks & validation ── */
+$txt.addEventListener('input', () => {
+  if (estado !== 'tel') return;
+  let v = $txt.value.replace(/\D/g,'').slice(0,11);
+  if (v.length > 10) v = v.replace(/^(\d{2})(\d{5})(\d{4})$/,'($1) $2-$3');
+  else if (v.length > 6) v = v.replace(/^(\d{2})(\d{4})(\d*)$/,'($1) $2-$3');
+  else if (v.length > 2) v = v.replace(/^(\d{2})(\d*)$/,'($1) $2');
+  $txt.value = v;
+});
+$txt.addEventListener('keydown', e => { if(e.key==='Enter' && !$send.disabled) enviar(); });
+
+function validTel(v) {
+  const d = v.replace(/\D/g,'');
+  return d.length===11 && !/^(\d)\1{10}$/.test(d);
+}
+function validEnd(v) { return /\d/.test(v) && v.trim().length >= 8; }
+function fmtTel(d) {
+  d = String(d).replace(/\D/g,'');
+  if(d.length===11) return d.replace(/^(\d{2})(\d{5})(\d{4})$/,'($1) $2-$3');
+  if(d.length===10) return d.replace(/^(\d{2})(\d{4})(\d{4})$/,'($1) $2-$3');
+  return d;
+}
+function fmtBRL(v) { return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+
+/* ── Envio de texto ── */
+function enviar() {
+  const v = $txt.value.trim();
+  if (!v || $txt.disabled) return;
+  $txt.value = '';
+  processTexto(v);
+}
+
+async function processTexto(txt) {
+  addMsg(txt,'user'); setInput(false);
+  if (estado==='nome') {
+    if (txt.length < 2) { await bot('Informe seu nome completo. 😊'); setInput(true,'Seu nome...'); return; }
+    sessao.nome = txt.trim();
+    await bot(`Olá, ${sessao.nome}! 👋`, 380);
+    await irTel();
+  } else if (estado==='tel') {
+    if (!validTel(txt)) { await bot('Número inválido. Use DDD + 9 dígitos, ex: (11) 99999-9999.'); setInput(true,'Seu telefone...'); return; }
+    sessao.telefone = txt.replace(/\D/g,'');
+    await bot(`📱 ${fmtTel(sessao.telefone)} — anotado!`, 350);
+    // Verifica endereço cadastrado
+    try {
+      const lk = await fetch(`/api/clientes/lookup?tel=${sessao.telefone}`).then(r=>r.json());
+      if (lk?.encontrado && lk?.endereco) { await irConfirmarEnd(lk.endereco); return; }
+    } catch(_) {}
+    await irEnd();
+  } else if (estado==='end') {
+    if (!validEnd(txt)) { await bot('Informe o endereço completo com número e bairro.'); setInput(true,'Rua, nº, bairro...'); return; }
+    sessao.endereco = txt.trim();
+    await bot(`📍 ${sessao.endereco} — anotado!`, 350);
+    await irPizza();
+  }
+}
+
+/* ── Fluxo ── */
+async function iniciar() {
+  setInput(false);
+  await bot('🍕 Olá! Bem-vindo à *Pede Pizza Piracicaba*!', 750);
+  await bot('Vou te ajudar a montar seu pedido. 😄', 550);
+  await bot('Qual é o seu nome?', 450);
+  estado = 'nome'; setInput(true,'Seu nome completo...');
+}
+
+async function irTel() {
+  await bot('Qual é o seu celular com DDD?', 450);
+  estado = 'tel'; setInput(true,'Ex: (11) 99999-9999');
+}
+async function irEnd() {
+  await bot('Qual é o endereço de entrega?', 450);
+  estado = 'end'; setInput(true,'Rua, número, bairro...');
+}
+async function irConfirmarEnd(endereco) {
+  await bot(`📍 Encontramos seu endereço cadastrado:\n${endereco}\n\nDeseja usar este endereço?`, 500);
+  estado = 'confirmar_end';
+  setInput(false);
+  setQR([
+    { label:'✅ Sim, usar este endereço', fn: () => usarEndSalvo(endereco) },
+    { label:'❌ Não, informar novo',      fn: () => { clearQR(); addMsg('❌ Não, informar novo','user'); irEnd(); } },
+  ]);
+}
+function usarEndSalvo(end) {
+  clearQR(); addMsg('✅ Sim, usar este endereço','user');
+  sessao.endereco = end;
+  bot(`📍 ${end} — confirmado!`, 350).then(irPizza);
+}
+async function irPizza() {
+  setInput(false);
+  await bot('Perfeito! Vamos montar sua pizza. 🍕', 450);
+  await iniciarPizza();
+}
+
+/* ── Pizza ── */
+function maxSab(tam) { return tam.fatias<=6?1:tam.fatias<=8?2:4; }
+
+async function iniciarPizza() {
+  sessao.pizzaAtual = { tipo:null, tamanho:null, sabores:[], borda:null };
+  await bot('Qual tamanho? 📏', 450);
+  estado = 'tam';
+  setQR(catalogo.TAMANHOS.map(t => ({
+    label: `${t.nome} (${t.fatias} fatias) · ${fmtBRL(t.preco)}`,
+    val: t, fn: escolheTam,
+  })));
+}
+
+async function escolheTam(tam, label) {
+  clearQR(); addMsg(label,'user');
+  sessao.pizzaAtual.tamanho = tam; _maxSab = maxSab(tam);
+  await bot(`${tam.nome} — ótima escolha! 👌`, 330);
+  await bot('Tipo da pizza?', 380);
+  estado = 'tipo';
+  setQR([
+    { label:'🧀 Salgada', val:'salgada', fn: escolheTipo },
+    { label:'🍓 Doce',    val:'doce',    fn: escolheTipo },
+  ]);
+}
+
+async function escolheTipo(tipo, label) {
+  clearQR(); addMsg(label,'user');
+  sessao.pizzaAtual.tipo = tipo; _sabores = [];
+  if (_maxSab > 1) {
+    await bot('Inteira ou meia a meia? 🍕', 380);
+    estado = 'qtd_sab';
+    setQR([
+      { label: '🍕 Inteira (1 sabor)',       val: 1, fn: escolheQtdSabores },
+      { label: '🍕 Meia a meia (2 sabores)',  val: 2, fn: escolheQtdSabores },
+    ]);
+  } else {
+    await irSabores();
+  }
+}
+
+async function escolheQtdSabores(qtd, label) {
+  clearQR(); addMsg(label, 'user');
+  _maxSab = qtd;
+  await irSabores();
+}
+
+async function irSabores() {
+  const lista = sessao.pizzaAtual.tipo === 'salgada' ? catalogo.PIZZAS.salgadas : catalogo.PIZZAS.doces;
+  const plural = _maxSab > 1 ? `até ${_maxSab} sabores` : '1 sabor';
+  await bot(`Escolha ${plural}:`, 380);
+  estado = 'sab'; renderSabores(lista);
+}
+
+function renderSabores(lista) {
+  $qr.innerHTML = '';
+  lista.forEach(s => {
+    const b = document.createElement('button');
+    b.className = 'qr'; b.textContent = s.nome; b.dataset.id = s.id;
+    b.onclick = () => toggleSab(s, b, lista);
+    $qr.appendChild(b);
+  });
+  const conf = document.createElement('button');
+  conf.id = 'conf-sab'; conf.className = 'qr ok'; conf.style.display='none';
+  conf.textContent = '✅ Confirmar sabor(es)'; conf.onclick = confirmarSab;
+  $qr.appendChild(conf);
+}
+
+function toggleSab(s, btn, lista) {
+  const idx = _sabores.findIndex(x => x.id===s.id);
+  if (idx>=0) { _sabores.splice(idx,1); btn.classList.remove('sel'); }
+  else {
+    if (_sabores.length >= _maxSab) {
+      const old = _sabores.shift();
+      $qr.querySelector(`[data-id="${old.id}"]`)?.classList.remove('sel');
+    }
+    _sabores.push(s); btn.classList.add('sel');
+  }
+  const c = document.getElementById('conf-sab');
+  if(c) c.style.display = _sabores.length>0 ? '' : 'none';
+}
+
+async function confirmarSab() {
+  if (!_sabores.length) return;
+  clearQR();
+  sessao.pizzaAtual.sabores = [..._sabores];
+  addMsg(_sabores.map(s=>s.nome).join(' / '),'user');
+  await bot('Ótimo! 🎉', 300);
+  if (sessao.pizzaAtual.tipo==='salgada' && catalogo.BORDAS.length) {
+    await irBorda();
+  } else {
+    sessao.pizzaAtual.borda = null; await pizzaOk();
+  }
+}
+
+async function irBorda() {
+  await bot('Deseja borda recheada? 🧀', 450);
+  estado = 'borda';
+  setQR([
+    ...catalogo.BORDAS.map(b => ({ label:`${b.nome} (+${fmtBRL(b.preco)})`, val:b, fn: escolheBorda })),
+    { label:'🚫 Sem borda', val:null, fn: escolheBorda, cls:'danger' },
+  ]);
+}
+
+async function escolheBorda(borda, label) {
+  clearQR(); addMsg(label,'user');
+  sessao.pizzaAtual.borda = borda; await pizzaOk();
+}
+
+async function pizzaOk() {
+  sessao.pizzas.push({...sessao.pizzaAtual});
+  await bot(`✅ Pizza ${sessao.pizzas.length} adicionada!`, 380);
+  estado = 'mais';
+  await bot('Mais uma pizza?', 400);
+  setQR([
+    { label:'➕ Adicionar outra', val:true,  fn: maisUma },
+    { label:'✅ Continuar',       val:false, fn: irAcomp },
+  ]);
+}
+
+async function maisUma() { clearQR(); addMsg('➕ Adicionar outra','user'); await iniciarPizza(); }
+
+/* ── Acompanhamento ── */
+async function irAcomp(_, label) {
+  clearQR(); if(label) addMsg(label,'user');
+  await bot('Deseja adicionar acompanhamento? 🥤', 550);
+  estado = 'acomp';
+  setQR(catalogo.ACOMPANHAMENTOS.map(a => ({
+    label: a.preco>0 ? `${a.nome} (+${fmtBRL(a.preco)})` : a.nome,
+    val:a, fn: escolheAcomp,
+  })));
+}
+
+async function escolheAcomp(a, label) {
+  clearQR(); addMsg(label,'user');
+  sessao.acompanhamento = a.preco>0 ? a : null;
+  await irPag();
+}
+
+/* ── Pagamento ── */
+async function irPag() {
+  await bot('Como vai pagar? 💳', 480);
+  estado = 'pag';
+  setQR([
+    { label:'💵 Dinheiro na entrega', val:'entrega', fn: escolhePag },
+    { label:'💳 Cartão na entrega',   val:'entrega', fn: escolhePag },
+    { label:'🏦 Pix',                 val:'pix',     fn: escolhePag },
+  ]);
+}
+
+async function escolhePag(pag, label) {
+  clearQR(); addMsg(label,'user');
+  sessao.pagamento = pag; await irConfirmar();
+}
+
+/* ── Resumo ── */
+function calcTotal() {
+  return sessao.pizzas.reduce((a,p) => a + (p.tamanho?.preco||0) + (p.borda?.preco||0), 0)
+       + (sessao.acompanhamento?.preco||0);
+}
+
+function htmlResumo() {
+  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let h = `<div>👤 <strong>${esc(sessao.nome)}</strong></div>
+           <div>📱 ${fmtTel(sessao.telefone)}</div>
+           <div>📍 ${esc(sessao.endereco)}</div><hr>`;
+  sessao.pizzas.forEach((p,i) => {
+    const tipo  = p.tipo==='salgada'?'🧀':'🍓';
+    const nomes = p.sabores.map(s=>s.nome).join(' / ');
+    const borda = p.borda ? ` + Borda ${p.borda.nome}` : '';
+    const preco = (p.tamanho?.preco||0) + (p.borda?.preco||0);
+    h += `<div>${tipo} Pizza ${i+1}: ${esc(p.tamanho?.nome)} — ${esc(nomes)}${esc(borda)} · <strong>${fmtBRL(preco)}</strong></div>`;
+  });
+  if (sessao.acompanhamento)
+    h += `<div>🥤 ${esc(sessao.acompanhamento.nome)} · <strong>${fmtBRL(sessao.acompanhamento.preco)}</strong></div>`;
+  const pagLabel = sessao.pagamento==='pix' ? '🏦 Pix' : '💵 Na entrega';
+  h += `<div style="margin-top:6px">💳 ${pagLabel}</div>`;
+  h += `<div class="total">Total: ${fmtBRL(calcTotal())}</div>`;
+  return h;
+}
+
+async function irConfirmar() {
+  await bot('Confira seu pedido:', 550);
+  addRaw(htmlResumo(), 'msg-resumo');
+  await bot('Posso confirmar?', 450);
+  estado = 'confirmar';
+  setQR([
+    { label:'✅ Confirmar pedido', fn: confirmar },
+    { label:'✏️ Recomeçar',        fn: recomecar, cls:'danger' },
+  ]);
+}
+
+/* ── Submissão ── */
+async function confirmar() {
+  clearQR(); addMsg('✅ Confirmar pedido','user');
+  estado = 'enviando'; setInput(false);
+  await bot('Enviando seu pedido... ⏳', 380);
+
+  try {
+    const r = await fetch('/api/pedidos/web', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        nome: sessao.nome, telefone: sessao.telefone, endereco: sessao.endereco,
+        pizzas: sessao.pizzas, acompanhamento: sessao.acompanhamento||null,
+        pagamento: sessao.pagamento, total: calcTotal(),
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.erro || 'Erro desconhecido');
+
+    estado = 'concluido';
+    document.getElementById('ch-status-txt').textContent = '✅ Pedido recebido!';
+
+    // Entrar na sala socket para receber atualizações em tempo real
+    socket.emit('join_pedido', data.numero);
+
+    // Banner "não feche a página"
+    document.getElementById('notif-banner').style.display = 'block';
+
+    // Solicitar permissão de notificação push
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    // Cartão de sucesso
+    addRaw(`
+      <div style="font-size:1.6rem">🎉</div>
+      <div style="font-weight:800;color:#15803d;margin:4px 0">Pedido confirmado!</div>
+      <div class="numero">${data.numero}</div>
+      <div class="eta">Tempo estimado: ${_tempoEntrega} min</div>
+    `, 'msg-sucesso');
+
+    // Pix — AbacatePay (link de checkout)
+    if (data.checkout_url) {
+      await bot('Para concluir o pagamento, clique no botão abaixo:', 500);
+      addRaw(`
+        <div class="pix-titulo">🏦 Pagar via Pix</div>
+        <a href="${data.checkout_url}" target="_blank" class="btn-checkout">
+          💳 Abrir página de pagamento
+        </a>
+        <div class="pix-instrucao">Após o pagamento ser confirmado automaticamente, seu pedido entra para preparo. ⏱️</div>
+      `, 'msg-pix');
+
+    // Pix — Copia e Cola manual
+    } else if (data.pix_code) {
+      await bot(`Pague via Pix — valor: ${fmtBRL(data.pix_valor)}`, 500);
+      const code = data.pix_code;
+      addRaw(`
+        <div class="pix-titulo">🏦 Pix Copia e Cola</div>
+        <div class="pix-code" id="pix-code-txt">${code}</div>
+        <button class="btn-copiar" onclick="copiarPix('${code.replace(/'/g,"\\'")}')">
+          📋 Copiar código Pix
+        </button>
+        <div class="pix-instrucao">Abra seu banco → Pix → Copia e Cola → cole o código. Após pagar, envie o comprovante pelo telefone informado.</div>
+      `, 'msg-pix');
+
+    // Pix — sem chave configurada
+    } else if (sessao.pagamento === 'pix') {
+      await bot('Nossa equipe enviará o código Pix para o seu celular em instantes. 📲', 500);
+    }
+
+    await bot('Obrigado! Nossa equipe já está preparando seu pedido. 🍕❤️', 700);
+
+    $qr.innerHTML = '';
+    const nb = document.createElement('button');
+    nb.className = 'qr ok'; nb.textContent = '🔄 Fazer novo pedido';
+    nb.onclick = () => location.reload();
+    $qr.appendChild(nb);
+
+  } catch (err) {
+    await bot(`❌ Erro ao enviar: ${err.message}. Tente novamente.`, 400);
+    estado = 'confirmar';
+    setQR([
+      { label:'🔁 Tentar novamente', fn: confirmar },
+      { label:'✏️ Recomeçar',         fn: recomecar, cls:'danger' },
+    ]);
+  }
+}
+
+async function recomecar() {
+  clearQR(); addMsg('✏️ Recomeçar','user');
+  sessao = { nome:null,telefone:null,endereco:null,pizzas:[],pizzaAtual:null,acompanhamento:null,pagamento:null };
+  await bot('Tudo bem, vamos começar de novo! 😊', 380);
+  await irPizza();
+}
+
+function copiarPix(code) {
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = $body.querySelector('.btn-copiar');
+    if (btn) { const orig=btn.textContent; btn.textContent='✅ Copiado!'; setTimeout(()=>btn.textContent=orig,2000); }
+  }).catch(() => {});
+}
+
+/* ── Bootstrap ── */
+(async () => {
+  try {
+    const [rCat, rLoja] = await Promise.all([
+      fetch('/api/catalogo'),
+      fetch('/api/loja/status'),
+    ]);
+    catalogo = await rCat.json();
+    if (!catalogo?.PIZZAS || !catalogo?.TAMANHOS?.length) throw new Error();
+    const loja = await rLoja.json().catch(() => ({}));
+    _tempoEntrega = loja?.tempo_entrega || '45';
+
+    if (loja && !loja.aberta) {
+      document.getElementById('ch-status-txt').textContent = '🔴 Fechado no momento';
+      document.getElementById('ch-status-txt').style.color = '#f87171';
+      addRaw(`
+        <div style="font-size:1.4rem;margin-bottom:8px">😔</div>
+        <div style="font-weight:700;margin-bottom:4px">Estamos fechados no momento</div>
+        <div style="font-size:.85rem;color:#64748b">Volte mais tarde para fazer seu pedido. Obrigado!</div>
+      `, 'msg-sucesso');
+      setInput(false,'');
+      return;
+    }
+  } catch {
+    addRaw('<div style="text-align:center;padding:20px;color:#64748b">⚠️ Sistema temporariamente indisponível.<br>Tente novamente em alguns minutos.</div>', 'msg-bot');
+    return;
+  }
+  await iniciar();
+})();
+</script>
+</body>
+</html>

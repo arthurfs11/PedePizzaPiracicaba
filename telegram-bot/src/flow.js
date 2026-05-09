@@ -4,12 +4,13 @@ const { isConfigurado: abacateConfigurado, criarCobrancaPix } = require('./abaca
 const {
   kbTipoPizza, kbTamanho, kbQuantidadeSabores, kbSabores,
   kbAcompanhamento, kbMaisPizza, kbConfirmar, kbPagamento, kbIniciar,
-  kbBorda, kbBordaSabor,
+  kbBorda, kbBordaSabor, kbConfirmarEndereco,
 } = require('./keyboards');
 const { getSession, setSession, clearSession } = require('./session');
 const { gerarPixCopiaECola } = require('./pix');
 
 const N8N_WEBHOOK_URL  = process.env.N8N_WEBHOOK_URL  || 'http://localhost:5678/webhook/direciona-pedido';
+const DASHBOARD_URL    = process.env.DASHBOARD_URL     || 'http://dashboard:8000';
 
 // Lidas dinamicamente para garantir que o dotenv já carregou
 function pixConfig() {
@@ -108,7 +109,8 @@ async function enviarMensagemDeEstado(ctx, sessao) {
     idle:                  () => ctx.reply('Olá! Use /start para iniciar um pedido. 🍕'),
     waiting_name:          () => ctx.reply('Por favor, me diga seu *nome* para continuar:', { parse_mode: 'Markdown' }),
     waiting_phone:         () => ctx.reply('Qual é o seu *número de celular* com DDD? (ex: 19 91234-5678)', { parse_mode: 'Markdown' }),
-    waiting_address:       () => ctx.reply('Me diga seu *endereço de entrega*:', { parse_mode: 'Markdown' }),
+    waiting_address:         () => ctx.reply('Me diga seu *endereço de entrega*:', { parse_mode: 'Markdown' }),
+    waiting_address_confirm: () => ctx.reply('Use os botões acima para confirmar ou trocar o endereço cadastrado.', { parse_mode: 'Markdown' }),
     choosing_type:         () => ctx.reply('*Que tipo de pizza você deseja?*', { parse_mode: 'Markdown', reply_markup: kbTipoPizza() }),
     choosing_size:         () => ctx.reply('*Qual tamanho?*', { parse_mode: 'Markdown', reply_markup: kbTamanho() }),
     choosing_flavor_count: () => ctx.reply('*Quantos sabores?*', { parse_mode: 'Markdown', reply_markup: kbQuantidadeSabores() }),
@@ -148,8 +150,25 @@ async function handleText(ctx) {
       );
       return;
     }
-    sessao.telefone = limparTelefone(texto); // salva só os dígitos
-    sessao.step     = 'waiting_address';
+    sessao.telefone = limparTelefone(texto);
+    setSession(chatId, sessao);
+
+    // Verifica se já temos o endereço cadastrado
+    try {
+      const { data } = await axios.get(`${DASHBOARD_URL}/api/clientes/lookup?tel=${sessao.telefone}`, { timeout: 3000 });
+      if (data?.encontrado && data?.endereco) {
+        sessao.step             = 'waiting_address_confirm';
+        sessao.enderecoSalvo    = data.endereco;
+        setSession(chatId, sessao);
+        await ctx.reply(
+          `📍 Encontramos seu endereço cadastrado:\n\n*${data.endereco}*\n\nDeseja usar este endereço?`,
+          { parse_mode: 'Markdown', reply_markup: kbConfirmarEndereco() }
+        );
+        return;
+      }
+    } catch (_) { /* sem cadastro, segue fluxo normal */ }
+
+    sessao.step = 'waiting_address';
     setSession(chatId, sessao);
     await ctx.reply('Perfeito! 📍 Agora me diga o seu *endereço de entrega* (rua, número, bairro):', { parse_mode: 'Markdown' });
     return;
@@ -188,15 +207,52 @@ async function handleCallback(ctx) {
 
   // ── Iniciar pedido ────────────────────────────────────────
   if (data === 'start_order') {
+    // Verifica se a loja está aberta e busca tempo de entrega configurado
+    let tempoEntrega = '40–50';
+    try {
+      const { data: st } = await axios.get(`${DASHBOARD_URL}/api/loja/status`, { timeout: 3000 });
+      if (st && !st.aberta) {
+        await ctx.reply(
+          '😔 *Estamos fechados no momento.*\n\nEm breve voltamos a atender. Use /start para tentar novamente quando estivermos abertos!',
+          { parse_mode: 'Markdown' }
+        );
+        return;
+      }
+      if (st?.tempo_entrega) tempoEntrega = st.tempo_entrega;
+    } catch (_) { /* erro de conexão — deixa prosseguir */ }
+
     setSession(chatId, {
       step:           'waiting_name',
       pizzas:         [],
       telefone:       null,
       acompanhamento: null,
       pagamento:      null,
+      tempoEntrega,
       pizzaAtual:     null,
     });
     await ctx.reply('Perfeito! Vamos começar. 😊\n\nPrimeiro, me diga o seu *nome completo*:', { parse_mode: 'Markdown' });
+    return;
+  }
+
+  // ── Confirmar endereço cadastrado ─────────────────────────
+  if (data === 'addr_y') {
+    if (sessao.step !== 'waiting_address_confirm') return;
+    sessao.endereco  = sessao.enderecoSalvo;
+    sessao.step      = 'choosing_type';
+    sessao.pizzaAtual = novaPizzaAtual();
+    setSession(chatId, sessao);
+    await ctx.reply(
+      `📍 Endereço confirmado: *${sessao.endereco}*\n\nVamos montar sua pizza! 🍕\n\n*Que tipo de pizza você deseja?*`,
+      { parse_mode: 'Markdown', reply_markup: kbTipoPizza() }
+    );
+    return;
+  }
+
+  if (data === 'addr_n') {
+    if (sessao.step !== 'waiting_address_confirm') return;
+    sessao.step = 'waiting_address';
+    setSession(chatId, sessao);
+    await ctx.reply('📍 Tudo bem! Me diga o seu *endereço de entrega* (rua, número, bairro):', { parse_mode: 'Markdown' });
     return;
   }
 
@@ -427,7 +483,7 @@ async function handleCallback(ctx) {
         );
         await ctx.reply(checkoutUrl);
         await ctx.reply(
-          `⏳ Assim que o pagamento for confirmado, seu pedido entra automaticamente para preparo!\n🕐 Tempo estimado: *40–50 min* após confirmação.`,
+          `⏳ Assim que o pagamento for confirmado, seu pedido entra automaticamente para preparo!\n🕐 Tempo estimado: *${sessao.tempoEntrega || '40–50'} min* após confirmação.`,
           { parse_mode: 'Markdown' }
         );
       } else {
@@ -435,7 +491,7 @@ async function handleCallback(ctx) {
         const { key, nome: pixNome, cidade: pixCidade } = pixConfig();
         if (!key) {
           await ctx.reply(
-            `✅ *Pedido #${numero} confirmado!*\n\n🏦 *Pagamento via Pix*\n\nEm breve enviaremos o código Pix pelo chat. 😊\n\n🕐 Tempo estimado: *40–50 min* após confirmação do pagamento.`,
+            `✅ *Pedido #${numero} confirmado!*\n\n🏦 *Pagamento via Pix*\n\nEm breve enviaremos o código Pix pelo chat. 😊\n\n🕐 Tempo estimado: *${sessao.tempoEntrega || '40–50'} min* após confirmação do pagamento.`,
             { parse_mode: 'Markdown' }
           );
         } else {
@@ -447,14 +503,14 @@ async function handleCallback(ctx) {
           );
           await ctx.reply(pixCode);
           await ctx.reply(
-            `⏳ Assim que o pagamento for identificado, seu pedido entra para preparo!\n🕐 Tempo estimado: *40–50 minutos* após confirmação.`,
+            `⏳ Assim que o pagamento for identificado, seu pedido entra para preparo!\n🕐 Tempo estimado: *${sessao.tempoEntrega || '40–50'} minutos* após confirmação.`,
             { parse_mode: 'Markdown' }
           );
         }
       }
     } else {
       await ctx.reply(
-        `✅ *Pedido #${numero} confirmado!*\n\n💵 Pagamento: *na entrega*\n\n🕐 Tempo estimado: *40–50 minutos*\n\nEm breve entraremos em contato. Obrigado pela preferência! 🍕`,
+        `✅ *Pedido #${numero} confirmado!*\n\n💵 Pagamento: *na entrega*\n\n🕐 Tempo estimado: *${sessao.tempoEntrega || '40–50'} minutos*\n\nEm breve entraremos em contato. Obrigado pela preferência! 🍕`,
         { parse_mode: 'Markdown' }
       );
     }

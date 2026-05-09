@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pede Pizza — Clientes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <span class="header-logo">🍕</span>
+      <div>
+        <h1 class="header-title">Pede Pizza Piracicaba</h1>
+        <p class="header-sub">Gestão de Clientes</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a href="/home"       class="nav-link">🏠 Início</a>
+    <a href="/"           class="nav-link">📋 Pedidos</a>
+    <a href="/relatorios" class="nav-link">📊 Relatórios</a>
+    <a href="/suporte"    class="nav-link">🎧 Suporte</a>
+    <a href="/cardapio"   class="nav-link" target="_blank">🍕 Cardápio Público</a>
+    <a href="/usuarios"   class="nav-link" id="nav-admin"    style="display:none">👥 Usuários</a>
+    <a href="/catalogo"   class="nav-link" id="nav-catalogo" style="display:none">🍕 Cardápio</a>
+    <a href="/clientes"   class="nav-link active" id="nav-clientes" style="display:none">👤 Clientes</a>
+    <a href="/configuracoes" class="nav-link" id="nav-config"        style="display:none">⚙️ Configurações</a>
+    <a href="/entregadores"  class="nav-link" id="nav-entregadores"  style="display:none">🛵 Entregadores</a>
+    <a href="/cancelados"    class="nav-link" id="nav-cancelados"    style="display:none">❌ Cancelados</a>
+    <button onclick="fazerLogout()" class="nav-logout">Sair</button>
+  </nav>
+
+  <!-- CONTENT -->
+  <main class="page-content">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+      <h2 class="page-title" style="margin-bottom:0">👤 Clientes</h2>
+      <button onclick="abrirModalCliente()" style="padding:9px 20px;background:#f97316;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:.9rem;cursor:pointer">+ Novo Cliente</button>
+    </div>
+
+    <!-- Busca -->
+    <div style="margin-bottom:16px;max-width:400px">
+      <input type="search" id="busca" placeholder="Buscar por nome ou telefone..." oninput="buscar()"
+        style="width:100%;padding:9px 14px;border:1.5px solid #d1d5db;border-radius:9px;font-size:.9rem;font-family:inherit;box-sizing:border-box" />
+    </div>
+
+    <!-- Tabela -->
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+        <thead>
+          <tr style="background:#f8fafc">
+            <th style="padding:11px 16px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">Nome</th>
+            <th style="padding:11px 16px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">Telefone</th>
+            <th style="padding:11px 16px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">Endereço</th>
+            <th style="padding:11px 16px;text-align:center;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">Pedidos</th>
+            <th style="padding:11px 16px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">Último pedido</th>
+            <th style="padding:11px 16px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-clientes">
+          <tr><td colspan="6" style="padding:40px;text-align:center;color:#94a3b8">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p id="total-label" style="font-size:.78rem;color:#94a3b8;margin-top:8px"></p>
+  </main>
+
+  <!-- Modal cliente -->
+  <div id="modal-cliente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:16px;padding:28px 32px;max-width:520px;width:95%;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto">
+      <h3 id="mc-titulo" style="margin:0 0 20px;font-size:1.05rem;font-weight:700">Novo Cliente</h3>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div>
+          <label style="font-size:.8rem;font-weight:600;color:#374151;display:block;margin-bottom:5px">Nome <span style="color:#e11d48">*</span></label>
+          <input id="mc-nome" type="text" style="width:100%;padding:8px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:.9rem;box-sizing:border-box" />
+        </div>
+        <div>
+          <label style="font-size:.8rem;font-weight:600;color:#374151;display:block;margin-bottom:5px">Telefone <span style="color:#e11d48">*</span></label>
+          <input id="mc-telefone" type="tel" inputmode="numeric" placeholder="(11) 99999-9999"
+            oninput="mascaraTelefone(this)"
+            style="width:100%;padding:8px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:.9rem;box-sizing:border-box" />
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="font-size:.8rem;font-weight:600;color:#374151;display:block;margin-bottom:5px">E-mail</label>
+        <input id="mc-email" type="email" style="width:100%;padding:8px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:.9rem;box-sizing:border-box" />
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="font-size:.8rem;font-weight:600;color:#374151;display:block;margin-bottom:5px">Endereço</label>
+        <input id="mc-endereco" type="text" style="width:100%;padding:8px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:.9rem;box-sizing:border-box" />
+      </div>
+
+      <div style="margin-bottom:20px">
+        <label style="font-size:.8rem;font-weight:600;color:#374151;display:block;margin-bottom:5px">Observações</label>
+        <textarea id="mc-obs" rows="3" style="width:100%;padding:8px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:.88rem;resize:vertical;box-sizing:border-box"></textarea>
+      </div>
+
+      <div id="mc-erro" style="display:none;color:#dc2626;font-size:.83rem;margin-bottom:12px"></div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button onclick="fecharModalCliente()" style="padding:8px 20px;border:1.5px solid #d1d5db;background:#fff;border-radius:8px;cursor:pointer;font-size:.88rem">Cancelar</button>
+        <button onclick="salvarCliente()" id="mc-btn" style="padding:8px 20px;background:#f97316;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:.88rem">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let _clienteEditId = null;
+    let _todosClientes = [];
+
+    function mascaraTelefone(input) {
+      let v = input.value.replace(/\D/g, '').slice(0, 11);
+      if (v.length > 10) {
+        v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+      } else if (v.length > 6) {
+        v = v.replace(/^(\d{2})(\d{4})(\d*)$/, '($1) $2-$3');
+      } else if (v.length > 2) {
+        v = v.replace(/^(\d{2})(\d*)$/, '($1) $2');
+      }
+      input.value = v;
+    }
+
+    function formatarTelefone(digits) {
+      if (!digits) return '—';
+      const d = String(digits).replace(/\D/g, '');
+      if (d.length === 11) return d.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+      if (d.length === 10) return d.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
+      return digits;
+    }
+
+    async function fazerLogout() {
+      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      window.location.href = '/login';
+    }
+
+    fetch('/api/auth/me').then(r => r.json()).then(me => {
+      if (me?.papel === 'admin' || me?.papel === 'super_admin') {
+        document.getElementById('nav-admin').style.display    = '';
+        document.getElementById('nav-catalogo').style.display = '';
+        document.getElementById('nav-clientes').style.display = '';
+        const elConf = document.getElementById('nav-config');       if (elConf) elConf.style.display = '';
+        const elEnt  = document.getElementById('nav-entregadores'); if (elEnt)  elEnt.style.display  = '';
+      }
+      if (me?.papel !== 'admin' && me?.papel !== 'super_admin') {
+        window.location.href = '/';
+      }
+    }).catch(() => {});
+
+    carregarClientes();
+
+    async function carregarClientes() {
+      const r = await fetch('/api/clientes').catch(() => null);
+      if (!r || !r.ok) return;
+      _todosClientes = await r.json();
+      renderTabela(_todosClientes);
+    }
+
+    function renderTabela(lista) {
+      const tbody = document.getElementById('tbody-clientes');
+      document.getElementById('total-label').textContent = lista.length ? `${lista.length} cliente(s) encontrado(s)` : '';
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="padding:40px;text-align:center;color:#94a3b8">Nenhum cliente encontrado.</td></tr>';
+        return;
+      }
+      const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      tbody.innerHTML = lista.map(c => {
+        const ult = c.ultimo_pedido ? String(c.ultimo_pedido).substring(0,16).replace('T',' ') : '—';
+        const obs = c.observacoes ? `<div style="font-size:.72rem;color:#64748b;margin-top:2px">${esc(c.observacoes)}</div>` : '';
+        return `<tr style="border-bottom:1px solid #f1f5f9">
+          <td style="padding:10px 16px"><div style="font-weight:600">${esc(c.nome)}</div>${c.email ? `<div style="font-size:.72rem;color:#64748b">${esc(c.email)}</div>` : ''}</td>
+          <td style="padding:10px 16px;white-space:nowrap">${formatarTelefone(c.telefone)}</td>
+          <td style="padding:10px 16px;max-width:220px">${c.endereco ? `<span title="${esc(c.endereco)}" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.endereco)}</span>` : '<span style="color:#94a3b8">—</span>'}${obs}</td>
+          <td style="padding:10px 16px;text-align:center">
+            <span style="display:inline-block;min-width:32px;background:#fff7ed;color:#c2410c;font-weight:700;font-size:.82rem;border-radius:20px;padding:3px 10px;border:1px solid #fed7aa">${c.total_pedidos}</span>
+          </td>
+          <td style="padding:10px 16px;font-size:.82rem;color:#64748b;white-space:nowrap">${ult}</td>
+          <td style="padding:10px 16px">
+            <div style="display:flex;gap:6px">
+              <button onclick="abrirModalCliente(${c.id})" style="padding:4px 10px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:600">✏️</button>
+              <button onclick="excluirCliente(${c.id},'${esc(c.nome)}')" style="padding:4px 10px;background:#fff0f0;border:1px solid #fecaca;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:600;color:#dc2626">🗑️</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function buscar() {
+      const q = document.getElementById('busca').value.toLowerCase().trim();
+      if (!q) { renderTabela(_todosClientes); return; }
+      renderTabela(_todosClientes.filter(c =>
+        c.nome.toLowerCase().includes(q) || (c.telefone || '').includes(q)
+      ));
+    }
+
+    function abrirModalCliente(id) {
+      _clienteEditId = id || null;
+      const c = id ? _todosClientes.find(x => x.id === id) : null;
+      document.getElementById('mc-titulo').textContent   = c ? 'Editar Cliente' : 'Novo Cliente';
+      document.getElementById('mc-nome').value      = c?.nome      || '';
+      document.getElementById('mc-telefone').value  = formatarTelefone(c?.telefone) !== '—' ? formatarTelefone(c?.telefone) : '';
+      document.getElementById('mc-email').value     = c?.email     || '';
+      document.getElementById('mc-endereco').value  = c?.endereco  || '';
+      document.getElementById('mc-obs').value       = c?.observacoes || '';
+      document.getElementById('mc-erro').style.display = 'none';
+      document.getElementById('modal-cliente').style.display = 'flex';
+    }
+
+    function fecharModalCliente() {
+      document.getElementById('modal-cliente').style.display = 'none';
+      _clienteEditId = null;
+    }
+
+    async function salvarCliente() {
+      const nome     = document.getElementById('mc-nome').value.trim();
+      const telefone = document.getElementById('mc-telefone').value.replace(/\D/g, '');
+      const email    = document.getElementById('mc-email').value.trim();
+      const endereco = document.getElementById('mc-endereco').value.trim();
+      const observacoes = document.getElementById('mc-obs').value.trim();
+      const erroEl   = document.getElementById('mc-erro');
+
+      if (!nome || !telefone) {
+        erroEl.textContent = 'Nome e telefone são obrigatórios.';
+        erroEl.style.display = 'block';
+        return;
+      }
+
+      const btn = document.getElementById('mc-btn');
+      btn.disabled = true;
+      btn.textContent = 'Salvando...';
+
+      const url    = _clienteEditId ? `/api/clientes/${_clienteEditId}` : '/api/clientes';
+      const method = _clienteEditId ? 'PATCH' : 'POST';
+      const r = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, telefone, email: email || null, endereco: endereco || null, observacoes: observacoes || null }),
+      }).catch(() => null);
+
+      btn.disabled = false;
+      btn.textContent = 'Salvar';
+
+      if (!r || !r.ok) {
+        const data = await r?.json().catch(() => ({}));
+        erroEl.textContent = data?.erro || 'Erro ao salvar cliente.';
+        erroEl.style.display = 'block';
+        return;
+      }
+
+      fecharModalCliente();
+      await carregarClientes();
+    }
+
+    async function excluirCliente(id, nome) {
+      if (!confirm(`Excluir o cliente "${nome}"? Esta ação não pode ser desfeita.`)) return;
+      await fetch(`/api/clientes/${id}`, { method: 'DELETE' });
+      await carregarClientes();
+    }
+  </script>
+</body>
+</html>

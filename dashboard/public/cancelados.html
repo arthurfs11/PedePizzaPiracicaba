@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pede Pizza — Relatórios</title>
+  <title>Pede Pizza — Pedidos Cancelados</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
@@ -16,29 +16,29 @@
       <span class="header-logo">🍕</span>
       <div>
         <h1 class="header-title">Pede Pizza Piracicaba</h1>
-        <p class="header-sub">Relatórios de Pedidos</p>
+        <p class="header-sub">Pedidos Cancelados</p>
       </div>
     </div>
   </header>
 
   <!-- NAV -->
   <nav class="nav">
-    <a href="/home"       class="nav-link">🏠 Início</a>
-    <a href="/"           class="nav-link" id="nav-pedidos">📋 Pedidos</a>
-    <a href="/relatorios" class="nav-link active">📊 Relatórios</a>
-    <a href="/suporte"    class="nav-link" id="nav-suporte">🎧 Suporte</a>
-    <a href="/usuarios"   class="nav-link" id="nav-admin"    style="display:none">👥 Usuários</a>
-    <a href="/catalogo"   class="nav-link" id="nav-catalogo" style="display:none">🍕 Cardápio</a>
-    <a href="/clientes"   class="nav-link" id="nav-clientes" style="display:none">👤 Clientes</a>
-    <a href="/configuracoes" class="nav-link" id="nav-config"        style="display:none">⚙️ Configurações</a>
-    <a href="/entregadores"  class="nav-link" id="nav-entregadores"  style="display:none">🛵 Entregadores</a>
-    <a href="/cancelados"    class="nav-link" id="nav-cancelados"    style="display:none">❌ Cancelados</a>
+    <a href="/home"          class="nav-link">🏠 Início</a>
+    <a href="/"              class="nav-link">📋 Pedidos</a>
+    <a href="/relatorios"    class="nav-link">📊 Relatórios</a>
+    <a href="/suporte"       class="nav-link">🎧 Suporte</a>
+    <a href="/cancelados"    class="nav-link active">❌ Cancelados</a>
+    <a href="/usuarios"      class="nav-link" id="nav-admin"       style="display:none">👥 Usuários</a>
+    <a href="/catalogo"      class="nav-link" id="nav-catalogo"    style="display:none">🍕 Cardápio</a>
+    <a href="/clientes"      class="nav-link" id="nav-clientes"    style="display:none">👤 Clientes</a>
+    <a href="/configuracoes" class="nav-link" id="nav-config"      style="display:none">⚙️ Configurações</a>
+    <a href="/entregadores"  class="nav-link" id="nav-entregadores" style="display:none">🛵 Entregadores</a>
     <button onclick="fazerLogout()" class="nav-logout">Sair</button>
   </nav>
 
   <!-- CONTENT -->
   <main class="page-content">
-    <h2 class="page-title">📊 Relatórios de Pedidos</h2>
+    <h2 class="page-title">❌ Pedidos Cancelados</h2>
 
     <!-- Filtros -->
     <div class="filter-bar">
@@ -57,24 +57,20 @@
     <!-- Resumo -->
     <div class="resumo-grid" id="resumo-grid">
       <div class="resumo-card">
-        <div class="resumo-label">Total de Pedidos</div>
+        <div class="resumo-label">Total Cancelados</div>
         <div class="resumo-value" id="r-total">—</div>
       </div>
       <div class="resumo-card">
-        <div class="resumo-label">Faturamento Total</div>
-        <div class="resumo-value" id="r-faturado">—</div>
+        <div class="resumo-label">Valor Total Cancelado</div>
+        <div class="resumo-value" id="r-valor">—</div>
       </div>
       <div class="resumo-card">
-        <div class="resumo-label">Ticket Médio</div>
-        <div class="resumo-value" id="r-ticket">—</div>
-      </div>
-      <div class="resumo-card">
-        <div class="resumo-label">Pagamento via Pix</div>
+        <div class="resumo-label">Cancelados via Pix</div>
         <div class="resumo-value" id="r-pix">—</div>
         <div class="resumo-sub" id="r-pix-pct"></div>
       </div>
       <div class="resumo-card">
-        <div class="resumo-label">Pagamento na Entrega</div>
+        <div class="resumo-label">Cancelados na Entrega</div>
         <div class="resumo-value" id="r-entrega">—</div>
         <div class="resumo-sub" id="r-entrega-pct"></div>
       </div>
@@ -94,7 +90,7 @@
             <th>Acomp.</th>
             <th>Pagamento</th>
             <th>Total</th>
-            <th>Concluído</th>
+            <th>Cancelado às</th>
           </tr>
         </thead>
         <tbody id="tabela-body">
@@ -111,20 +107,11 @@
     }
 
     fetch('/api/auth/me').then(r => r.json()).then(me => {
-      if (['admin', 'super_admin', 'operador'].includes(me?.papel)) {
-        const elC = document.getElementById('nav-catalogo');
-        if (elC) elC.style.display = '';
-      }
-      if (['admin', 'super_admin'].includes(me?.papel)) {
-        ['nav-admin','nav-clientes','nav-config','nav-entregadores','nav-cancelados'].forEach(id => {
+      if (!me?.papel) { window.location.href = '/login'; return; }
+      if (['admin', 'super_admin'].includes(me.papel)) {
+        ['nav-admin', 'nav-catalogo', 'nav-clientes', 'nav-config', 'nav-entregadores'].forEach(id => {
           const el = document.getElementById(id);
           if (el) el.style.display = '';
-        });
-      }
-      if (me?.papel === 'contabil') {
-        ['nav-pedidos', 'nav-suporte'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.style.display = 'none';
         });
       }
     }).catch(() => {});
@@ -135,9 +122,9 @@
 
     function fmtHora(dataStr) {
       try {
-        const d = new Date(String(dataStr || '').replace(' ', 'T'));
-        return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-      } catch(_) { return ''; }
+        const m = String(dataStr || '').match(/(\d{2}):(\d{2})/);
+        return m ? `${m[1]}:${m[2]}` : '—';
+      } catch(_) { return '—'; }
     }
 
     function escH(str) {
@@ -153,7 +140,7 @@
       if (de)  params.set('de',  de);
       if (ate) params.set('ate', ate);
 
-      const r = await fetch(`/api/relatorios?${params}`).catch(() => null);
+      const r = await fetch(`/api/pedidos/cancelados?${params}`).catch(() => null);
       if (!r) { alert('Erro de conexão.'); return; }
       if (r.status === 401) { window.location.href = '/login'; return; }
       if (!r.ok) { alert('Erro ao buscar dados.'); return; }
@@ -165,31 +152,32 @@
     }
 
     function renderizarResumo(r) {
-      document.getElementById('r-total').textContent    = r.total_pedidos;
-      document.getElementById('r-faturado').textContent = fmt(r.total_faturado);
-      document.getElementById('r-ticket').textContent   = fmt(r.ticket_medio);
-      document.getElementById('r-pix').textContent      = r.por_pagamento.pix;
-      document.getElementById('r-entrega').textContent  = r.por_pagamento.entrega;
+      document.getElementById('r-total').textContent  = r.total_pedidos;
+      document.getElementById('r-valor').textContent  = fmt(r.total_valor);
+      document.getElementById('r-pix').textContent    = r.por_pagamento.pix;
+      document.getElementById('r-entrega').textContent = r.por_pagamento.entrega;
       const pct = n => r.total_pedidos > 0 ? Math.round(n / r.total_pedidos * 100) + '%' : '—';
-      document.getElementById('r-pix-pct').textContent     = `${pct(r.por_pagamento.pix)} dos pedidos`;
-      document.getElementById('r-entrega-pct').textContent = `${pct(r.por_pagamento.entrega)} dos pedidos`;
+      document.getElementById('r-pix-pct').textContent     = `${pct(r.por_pagamento.pix)} dos cancelados`;
+      document.getElementById('r-entrega-pct').textContent = `${pct(r.por_pagamento.entrega)} dos cancelados`;
     }
 
     function renderizarTabela(pedidos) {
       const tbody = document.getElementById('tabela-body');
       if (pedidos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="table-empty">Nenhum pedido encontrado para o período selecionado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="table-empty">Nenhum pedido cancelado no período selecionado.</td></tr>';
         return;
       }
       tbody.innerHTML = pedidos.map(p => {
-        const itens   = (p.itens || []).map(i => `${i.tamanho?.nome || ''} ${(i.sabores||[]).map(s=>s.nome).join('/')}`).join('<br>');
-        const acomp   = p.acompanhamento?.nome || '—';
-        const pag     = p.pagamento === 'pix' ? '<span class="badge-pagamento badge-pix">🏦 Pix</span>' : '<span class="badge-pagamento badge-entrega">💵 Entrega</span>';
-        const data    = (p.criado_em || '').split(' ')[0] || '—';
-        const hora    = fmtHora(p.criado_em);
-        const conc    = p.concluido_em ? fmtHora(p.concluido_em) : '—';
-        return `<tr>
-          <td class="td-numero">${escH(p.numero)}</td>
+        const itens  = (p.itens || []).map(i => `${i.tamanho?.nome || ''} ${(i.sabores||[]).map(s=>s.nome).join('/')}`).join('<br>');
+        const acomp  = p.acompanhamento?.nome || '—';
+        const pag    = p.pagamento === 'pix'
+          ? '<span class="badge-pagamento badge-pix">🏦 Pix</span>'
+          : '<span class="badge-pagamento badge-entrega">💵 Entrega</span>';
+        const data   = (p.criado_em || '').split(' ')[0] || '—';
+        const hora   = fmtHora(p.criado_em);
+        const canc   = p.cancelado_em ? fmtHora(p.cancelado_em) : '—';
+        return `<tr style="opacity:.85">
+          <td class="td-numero" style="color:#dc2626">${escH(p.numero)}</td>
           <td style="white-space:nowrap">${escH(data)}<br><span style="color:#94a3b8;font-size:.72rem">${hora}</span></td>
           <td><strong>${escH(p.nome)}</strong></td>
           <td>${escH(p.telefone || '—')}</td>
@@ -197,27 +185,36 @@
           <td style="font-size:.78rem">${itens}</td>
           <td style="white-space:nowrap">${escH(acomp)}</td>
           <td>${pag}</td>
-          <td class="td-total">${fmt(p.total)}</td>
-          <td style="white-space:nowrap">${escH(conc)}</td>
+          <td class="td-total" style="color:#dc2626">${fmt(p.total)}</td>
+          <td style="white-space:nowrap;color:#dc2626">${escH(canc)}</td>
         </tr>`;
       }).join('');
     }
 
     async function exportarCsv() {
-      const de  = document.getElementById('de').value;
-      const ate = document.getElementById('ate').value;
-      const params = new URLSearchParams({ formato: 'csv' });
-      if (de)  params.set('de',  de);
-      if (ate) params.set('ate', ate);
-
-      const r = await fetch(`/api/relatorios?${params}`).catch(() => null);
-      if (!r || !r.ok) { alert('Erro ao gerar CSV.'); return; }
-
-      const blob = await r.blob();
+      if (!dadosAtuais.length) { alert('Faça uma busca antes de exportar.'); return; }
+      const header = ['Número','Data','Hora','Cliente','Telefone','Endereço','Itens','Acomp.','Pagamento','Total','Cancelado às'];
+      const rows = dadosAtuais.map(p => [
+        p.numero,
+        (p.criado_em||'').split(' ')[0],
+        fmtHora(p.criado_em),
+        p.nome,
+        p.telefone || '',
+        p.endereco,
+        (p.itens||[]).map(i=>`${i.tamanho?.nome||''} ${(i.sabores||[]).map(s=>s.nome).join('/')}`).join('; '),
+        p.acompanhamento?.nome || '',
+        p.pagamento,
+        p.total,
+        fmtHora(p.cancelado_em),
+      ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+      const csv  = [header.join(','), ...rows].join('\n');
+      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
+      const de   = document.getElementById('de').value;
+      const ate  = document.getElementById('ate').value;
       a.href     = url;
-      a.download = `relatorio-${de || 'inicio'}-${ate || 'fim'}.csv`;
+      a.download = `cancelados-${de||'inicio'}-${ate||'fim'}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     }

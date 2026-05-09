@@ -52,10 +52,18 @@
 
   <!-- NAV -->
   <nav class="nav">
+    <a href="/home"       class="nav-link">🏠 Início</a>
     <a href="/"           class="nav-link active">📋 Pedidos</a>
     <a href="/relatorios" class="nav-link">📊 Relatórios</a>
     <a href="/suporte"    class="nav-link">🎧 Suporte</a>
-    <a href="/usuarios"   class="nav-link" id="nav-admin" style="display:none">👥 Usuários</a>
+    <a href="/cardapio"   class="nav-link" target="_blank">🍕 Cardápio Público</a>
+    <a href="/usuarios"   class="nav-link" id="nav-admin"    style="display:none">👥 Usuários</a>
+    <a href="/catalogo"   class="nav-link" id="nav-catalogo" style="display:none">🍕 Cardápio</a>
+    <a href="/clientes"   class="nav-link" id="nav-clientes" style="display:none">👤 Clientes</a>
+    <a href="/configuracoes" class="nav-link" id="nav-config"        style="display:none">⚙️ Configurações</a>
+    <a href="/entregadores"  class="nav-link" id="nav-entregadores"  style="display:none">🛵 Entregadores</a>
+    <a href="/cancelados"    class="nav-link" id="nav-cancelados"    style="display:none">❌ Cancelados</a>
+    <button class="nav-btn-novo" onclick="abrirNovoPedido()">➕ Novo Pedido</button>
     <button onclick="fazerLogout()" class="nav-logout">Sair</button>
   </nav>
 
@@ -135,12 +143,107 @@
         </div>
       </div>
     </section>
+
   </main>
 
   <!-- NOTIFICATION SOUND (silent audio to unlock AudioContext) -->
   <audio id="notif-audio" preload="auto">
     <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbv4hCIyVGm9nbvJRjPDl0pfLlr3hIMi9Xj+fuvY9dRTU5Z5rg3ryXaE1CS3qm6uyyjFlHO0d4o+XvuIpbTD9HdrLs87qEV0k/S3u26fm0gVZLP0t6s/H6sX5VTD9OhMP5/LV7V1JHVZXJ/f61dlhOUV+gz/3/tXJaT1Rfqtj//7dvYFNbcL7m//+ze2RYYX3E7P//s3xoWmuP0vX//7F/bGF3m+H8//+ugnFpg6r3AACH" type="audio/wav" />
   </audio>
+
+  <!-- MODAL: Novo / Editar Pedido -->
+  <div class="modal-overlay" id="modal-pedido">
+    <div class="modal-box modal-pedido-box">
+      <div class="modal-title" id="mp-title">➕ Novo Pedido Manual</div>
+
+      <!-- Cliente -->
+      <div class="mp-section">
+        <div class="mp-section-title">👤 Dados do Cliente</div>
+        <div class="mp-grid-2">
+          <div class="form-field">
+            <label>Nome <span class="req">*</span></label>
+            <input type="text" id="mp-nome" placeholder="Nome do cliente" />
+          </div>
+          <div class="form-field">
+            <label>Telefone</label>
+            <input type="text" id="mp-telefone" placeholder="(11) 91234-5678" />
+          </div>
+        </div>
+        <div class="form-field" style="margin-top:10px">
+          <label>Endereço <span class="req">*</span></label>
+          <input type="text" id="mp-endereco" placeholder="Rua, número, bairro" />
+        </div>
+        <div class="form-field" style="margin-top:10px">
+          <label>Pagamento</label>
+          <select id="mp-pagamento">
+            <option value="entrega">💵 Dinheiro / Cartão na entrega</option>
+            <option value="pix">🏦 Pix</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Pizzas -->
+      <div class="mp-section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="mp-section-title" style="margin:0">🍕 Pizzas do Pedido</div>
+          <button class="mp-btn-add-pizza" onclick="abrirFormPizza()">+ Adicionar Pizza</button>
+        </div>
+        <div id="mp-pizzas-lista">
+          <div class="mp-empty-msg" id="mp-empty-pizzas">Nenhuma pizza adicionada ainda.</div>
+        </div>
+      </div>
+
+      <!-- Form: nova pizza (colapsável) -->
+      <div class="mp-pizza-form" id="mp-pizza-form" style="display:none">
+        <div class="mp-section-title">🍕 Configurar Pizza</div>
+        <div class="mp-grid-2">
+          <div class="form-field">
+            <label>Tipo</label>
+            <select id="mp-pizza-tipo" onchange="filtrarSaboresModal()">
+              <option value="salgada">🧀 Salgada</option>
+              <option value="doce">🍓 Doce</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Tamanho</label>
+            <select id="mp-pizza-tamanho" onchange="calcularTotalModal()"></select>
+          </div>
+        </div>
+        <div class="form-field" style="margin-top:10px">
+          <label>Sabores <small style="color:#94a3b8">(marque até 2)</small></label>
+          <div id="mp-sabores-grid" class="mp-sabores-grid"></div>
+        </div>
+        <div class="form-field" style="margin-top:10px" id="mp-borda-wrap">
+          <label>Borda recheada <small style="color:#94a3b8">(opcional)</small></label>
+          <select id="mp-pizza-borda" onchange="calcularTotalModal()">
+            <option value="">Sem borda</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="mp-btn-cancel" onclick="fecharFormPizza()">Cancelar</button>
+          <button class="mp-btn-salvar" onclick="confirmarPizzaModal()">✅ Confirmar Pizza</button>
+        </div>
+      </div>
+
+      <!-- Acompanhamento -->
+      <div class="mp-section">
+        <div class="mp-section-title">🥤 Acompanhamento</div>
+        <select id="mp-acompanhamento" onchange="calcularTotalModal()"></select>
+      </div>
+
+      <!-- Total -->
+      <div class="mp-total-row">
+        <span>Total do Pedido:</span>
+        <span id="mp-total-val" class="mp-total-val">R$ 0,00</span>
+      </div>
+
+      <div class="feedback-inline" id="fi-mp"></div>
+      <div class="modal-actions" style="margin-top:14px">
+        <button class="btn-modal-cancel" onclick="fecharModalPedido()">Cancelar</button>
+        <button class="btn-modal-salvar" id="btn-submit-pedido" onclick="submeterPedidoModal()">✅ Lançar Pedido</button>
+      </div>
+    </div>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>

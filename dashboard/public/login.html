@@ -156,7 +156,7 @@
         });
         const data = await r.json();
         if (r.ok) {
-          window.location.href = '/';
+          window.location.href = data.papel === 'contabil' ? '/relatorios' : '/home';
         } else {
           erroEl.textContent = data.erro || 'Erro desconhecido.';
           erroEl.style.display = 'block';

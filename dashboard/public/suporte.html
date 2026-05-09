@@ -23,10 +23,16 @@
 
   <!-- NAV -->
   <nav class="nav">
+    <a href="/home"       class="nav-link">🏠 Início</a>
     <a href="/"           class="nav-link">📋 Pedidos</a>
     <a href="/relatorios" class="nav-link">📊 Relatórios</a>
     <a href="/suporte"    class="nav-link active">🎧 Suporte</a>
-    <a href="/usuarios"   class="nav-link" id="nav-admin" style="display:none">👥 Usuários</a>
+    <a href="/usuarios"   class="nav-link" id="nav-admin"    style="display:none">👥 Usuários</a>
+    <a href="/catalogo"   class="nav-link" id="nav-catalogo" style="display:none">🍕 Cardápio</a>
+    <a href="/clientes"   class="nav-link" id="nav-clientes" style="display:none">👤 Clientes</a>
+    <a href="/configuracoes" class="nav-link" id="nav-config"        style="display:none">⚙️ Configurações</a>
+    <a href="/entregadores"  class="nav-link" id="nav-entregadores"  style="display:none">🛵 Entregadores</a>
+    <a href="/cancelados"    class="nav-link" id="nav-cancelados"    style="display:none">❌ Cancelados</a>
     <button onclick="fazerLogout()" class="nav-logout">Sair</button>
   </nav>
 
@@ -80,7 +86,7 @@
     </div>
 
     <!-- Histórico de chamados -->
-    <div style="margin-top:40px;max-width:900px">
+    <div style="margin-top:40px;max-width:1100px">
       <h3 style="font-size:1rem;font-weight:700;color:#1e293b;margin-bottom:14px">📂 Histórico de Chamados</h3>
       <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow-x:auto">
         <table id="tabela-chamados" style="width:100%;border-collapse:collapse;font-size:.82rem">
@@ -91,58 +97,142 @@
               <th style="padding:10px 14px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">Nome</th>
               <th style="padding:10px 14px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">Assunto</th>
               <th style="padding:10px 14px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">Prioridade</th>
-              <th style="padding:10px 14px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">E-mail</th>
+              <th style="padding:10px 14px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">Status</th>
+              <th id="th-tenant" style="display:none;padding:10px 14px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">Tenant</th>
+              <th id="th-acoes" style="display:none;padding:10px 14px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid #e2e8f0">Ações</th>
             </tr>
           </thead>
           <tbody id="lista-chamados">
-            <tr><td colspan="6" style="padding:32px;text-align:center;color:#94a3b8">Carregando...</td></tr>
+            <tr><td colspan="8" style="padding:32px;text-align:center;color:#94a3b8">Carregando...</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </main>
 
+  <!-- Modal edição de chamado (admin/super_admin) -->
+  <div id="modal-chamado" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:16px;padding:28px 32px;max-width:480px;width:95%;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+      <h3 style="margin:0 0 20px;font-size:1.05rem;font-weight:700">Atualizar Chamado <span id="mc-id" style="color:#64748b"></span></h3>
+      <div style="margin-bottom:16px">
+        <label style="font-size:.82rem;font-weight:600;color:#374151;display:block;margin-bottom:6px">Status</label>
+        <select id="mc-status" style="width:100%;padding:8px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:.9rem">
+          <option value="aberto">🟢 Aberto</option>
+          <option value="em_andamento">🟡 Em andamento</option>
+          <option value="resolvido">✅ Resolvido</option>
+          <option value="fechado">🔒 Fechado</option>
+        </select>
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="font-size:.82rem;font-weight:600;color:#374151;display:block;margin-bottom:6px">Notas internas</label>
+        <textarea id="mc-notas" rows="4" style="width:100%;padding:8px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:.88rem;resize:vertical;box-sizing:border-box" placeholder="Notas visíveis apenas para a equipe..."></textarea>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button onclick="fecharModalChamado()" style="padding:8px 20px;border:1.5px solid #d1d5db;background:#fff;border-radius:8px;cursor:pointer;font-size:.88rem">Cancelar</button>
+        <button onclick="salvarChamado()" style="padding:8px 20px;background:#e11d48;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:.88rem">Salvar</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    let _meuPapel = null;
+    let _chamadoEditId = null;
+    let _listaChamados = [];
+
     async function fazerLogout() {
       await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
       window.location.href = '/login';
     }
 
-    // Revelar link de admin e esconder itens do nav para contábil
+    // Revelar link de admin e carregar chamados após saber o papel
     fetch('/api/auth/me').then(r => r.json()).then(me => {
-      if (me?.papel === 'admin') {
-        const el = document.getElementById('nav-admin');
-        if (el) el.style.display = '';
+      _meuPapel = me?.papel;
+      if (me?.papel === 'admin' || me?.papel === 'super_admin') {
+        const elA = document.getElementById('nav-admin');
+        const elC = document.getElementById('nav-catalogo');
+        if (elA) elA.style.display = '';
+        if (elC) elC.style.display = '';
+        document.getElementById('th-acoes').style.display = '';
+        document.getElementById('nav-clientes').style.display = '';
+        const elConf = document.getElementById('nav-config');       if (elConf) elConf.style.display = '';
+        const elEnt  = document.getElementById('nav-entregadores'); if (elEnt)  elEnt.style.display  = '';
+        if (me?.papel === 'super_admin') document.getElementById('th-tenant').style.display = '';
       }
-    }).catch(() => {});
+      carregarChamados();
+    }).catch(() => { carregarChamados(); });
 
-    carregarChamados();
+    const statusLabel = {
+      aberto:       '<span style="color:#16a34a;font-weight:600;font-size:.75rem">🟢 Aberto</span>',
+      em_andamento: '<span style="color:#d97706;font-weight:600;font-size:.75rem">🟡 Em andamento</span>',
+      resolvido:    '<span style="color:#2563eb;font-weight:600;font-size:.75rem">✅ Resolvido</span>',
+      fechado:      '<span style="color:#64748b;font-weight:600;font-size:.75rem">🔒 Fechado</span>',
+    };
 
     async function carregarChamados() {
       const r = await fetch('/api/suporte/chamados').catch(() => null);
       if (!r || !r.ok) return;
-      const lista = await r.json();
+      _listaChamados = await r.json();
+      const lista = _listaChamados;
       const tbody = document.getElementById('lista-chamados');
+      const isAdmin = _meuPapel === 'admin' || _meuPapel === 'super_admin';
+      const isSuperAdmin = _meuPapel === 'super_admin';
+      const cols = isAdmin ? (isSuperAdmin ? 8 : 7) : 6;
       if (!lista.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="padding:32px;text-align:center;color:#94a3b8">Nenhum chamado registrado ainda.</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="${cols}" style="padding:32px;text-align:center;color:#94a3b8">Nenhum chamado registrado ainda.</td></tr>`;
         return;
       }
       const prioLabel = { alta: '<span style="color:#dc2626;font-weight:700">🔴 Alta</span>', media: '<span style="color:#d97706;font-weight:700">🟡 Média</span>', baixa: '<span style="color:#16a34a;font-weight:700">🟢 Baixa</span>' };
       const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       tbody.innerHTML = lista.map(c => {
         const data = String(c.criado_em||'').replace('T',' ').substring(0,16);
-        const emailBadge = c.email_enviado
-          ? '<span style="color:#16a34a;font-size:.72rem">✅ Enviado</span>'
-          : '<span style="color:#94a3b8;font-size:.72rem">📋 Registrado</span>';
+        const tenantCell = isSuperAdmin
+          ? `<td style="padding:10px 14px;font-size:.75rem">${c.tenant_link ? `<a href="${esc(c.tenant_link)}" target="_blank" style="color:#2563eb;text-decoration:none">${esc(c.tenant_link)}</a>` : '<span style="color:#94a3b8">—</span>'}</td>`
+          : '';
+        const acaoCell = isAdmin
+          ? `<td style="padding:10px 14px"><button onclick="abrirModalChamado(${c.id})" style="padding:4px 12px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:600">✏️ Editar</button></td>`
+          : '';
+        const notasHtml = c.notas ? `<div style="font-size:.72rem;color:#64748b;margin-top:3px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.notas)}">📝 ${esc(c.notas)}</div>` : '';
         return `<tr style="border-bottom:1px solid #f1f5f9">
           <td style="padding:10px 14px;color:#64748b">#${c.id}</td>
           <td style="padding:10px 14px;white-space:nowrap;color:#64748b">${esc(data)}</td>
-          <td style="padding:10px 14px;font-weight:600">${esc(c.nome)}</td>
-          <td style="padding:10px 14px">${esc(c.assunto)}</td>
+          <td style="padding:10px 14px"><div style="font-weight:600">${esc(c.nome)}</div><div style="font-size:.72rem;color:#64748b">${esc(c.email)}</div></td>
+          <td style="padding:10px 14px">${esc(c.assunto)}${notasHtml}</td>
           <td style="padding:10px 14px">${prioLabel[c.prioridade] || prioLabel.media}</td>
-          <td style="padding:10px 14px">${emailBadge}</td>
+          <td style="padding:10px 14px">${statusLabel[c.status || 'aberto'] || statusLabel.aberto}</td>
+          ${tenantCell}
+          ${acaoCell}
         </tr>`;
       }).join('');
+    }
+
+    function abrirModalChamado(id) {
+      const c = _listaChamados.find(x => x.id === id);
+      if (!c) return;
+      _chamadoEditId = id;
+      document.getElementById('mc-id').textContent    = `#${id}`;
+      document.getElementById('mc-status').value      = c.status || 'aberto';
+      document.getElementById('mc-notas').value       = c.notas  || '';
+      document.getElementById('modal-chamado').style.display = 'flex';
+    }
+
+    function fecharModalChamado() {
+      document.getElementById('modal-chamado').style.display = 'none';
+      _chamadoEditId = null;
+    }
+
+    async function salvarChamado() {
+      if (!_chamadoEditId) return;
+      const status = document.getElementById('mc-status').value;
+      const notas  = document.getElementById('mc-notas').value.trim();
+      const r = await fetch(`/api/suporte/chamados/${_chamadoEditId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, notas }),
+      });
+      if (r.ok) {
+        fecharModalChamado();
+        await carregarChamados();
+      }
     }
 
     async function enviarChamado() {

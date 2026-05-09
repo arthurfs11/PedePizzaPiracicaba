@@ -31,6 +31,12 @@
   --concluido-head:  #dcfce7;
   --concluido-col:   #22c55e;
 
+  --cancelado-bg:    #fef2f2;
+  --cancelado-border:#fca5a5;
+  --cancelado-badge: #dc2626;
+  --cancelado-head:  #fee2e2;
+  --cancelado-col:   #ef4444;
+
   --entrega-bg:    #faf5ff;
   --entrega-border:#c084fc;
   --entrega-badge: #9333ea;
@@ -54,6 +60,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: auto;
 }
 
 /* ── Header ── */
@@ -110,6 +117,8 @@ body {
 .stat-entrega   .stat-dot { background: #c084fc; }
 .stat-concluido { background: rgba(74,222,128,.2); color: #4ade80; }
 .stat-concluido .stat-dot { background: #4ade80; }
+.stat-cancelado { background: rgba(239,68,68,.2); color: #f87171; }
+.stat-cancelado .stat-dot { background: #f87171; }
 .stat-total     { background: rgba(255,255,255,.1); color: #f8fafc; }
 
 .header-time {
@@ -214,6 +223,25 @@ body {
 .card-telefone {
   font-size: .78rem;
   color: var(--text-secondary);
+}
+
+.badge-ordem {
+  display: inline-block;
+  font-size: .72rem;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 2px 8px;
+  margin-top: 2px;
+}
+.badge-ordem.primeiro-pedido {
+  background: #fef9c3;
+  color: #92400e;
+  border: 1px solid #fbbf24;
+}
+.badge-ordem.pedido-recorrente {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #38bdf8;
 }
 
 /* ── Página de conteúdo (relatórios / suporte) ── */
@@ -417,23 +445,19 @@ body {
 /* ── Board ── */
 .board {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 16px;
-  padding: 20px 20px 32px;
-  flex: 1;
+  grid-template-columns: repeat(5, minmax(290px, 1fr));
+  gap: 14px;
+  padding: 16px 16px 32px;
   align-items: start;
-}
-
-@media (max-width: 1400px) {
-  .board { grid-template-columns: repeat(3, 1fr); }
+  overflow-x: auto;
 }
 
 @media (max-width: 900px) {
-  .board { grid-template-columns: repeat(2, 1fr); }
+  .board { grid-template-columns: repeat(2, minmax(240px, 1fr)); }
 }
 
 @media (max-width: 600px) {
-  .board { grid-template-columns: 1fr; }
+  .board { grid-template-columns: minmax(240px, 1fr); }
 }
 
 /* ── Column ── */
@@ -445,6 +469,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 0;
 }
 
 .column-header {
@@ -455,6 +480,8 @@ body {
   font-weight: 700;
   font-size: .95rem;
   border-bottom: 2px solid transparent;
+  border-radius: var(--radius) var(--radius) 0 0;
+  overflow: hidden;
 }
 
 .column-pendente  .column-header { background: var(--pendente-head);  border-color: var(--pendente-col); }
@@ -462,6 +489,7 @@ body {
 .column-andamento .column-header { background: var(--andamento-head); border-color: var(--andamento-col); }
 .column-entrega   .column-header { background: var(--entrega-head);   border-color: var(--entrega-col); }
 .column-concluido .column-header { background: var(--concluido-head); border-color: var(--concluido-col); }
+.column-cancelado .column-header { background: var(--cancelado-head); border-color: var(--cancelado-col); }
 
 .column-icon  { font-size: 1.2rem; }
 .column-title { flex: 1; }
@@ -483,13 +511,14 @@ body {
 .column-andamento .column-badge { background: var(--andamento-badge); color: #fff; }
 .column-entrega   .column-badge { background: var(--entrega-badge);   color: #fff; }
 .column-concluido .column-badge { background: var(--concluido-badge); color: #fff; }
+.column-cancelado .column-badge { background: var(--cancelado-badge); color: #fff; }
 
 .column-body {
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-height: 120px;
+  min-height: 80px;
 }
 
 /* ── Empty state ── */
@@ -571,7 +600,7 @@ body {
   border-color: #bae6fd;
 }
 
-.card-body { padding: 10px 12px; }
+.card-body { padding: 10px 12px; overflow-wrap: break-word; word-break: break-word; min-width: 0; }
 
 .card-cliente {
   display: flex;
@@ -628,9 +657,47 @@ body {
 .card-total-label { color: var(--text-secondary); }
 .card-total-value { font-weight: 800; font-size: 1rem; color: #16a34a; }
 
+/* ── Card mini (Concluídos) ── */
+.card-mini-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px 2px;
+  gap: 8px;
+  font-size: .85rem;
+}
+.card-mini-body .card-nome { color: var(--text-secondary); font-size: .8rem; }
+.card-mini-body .card-total-value { font-size: .88rem; }
+
+/* ── Entregador ── */
+.card-entregador {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #f0fdf4;
+  border-top: 1px solid #bbf7d0;
+  font-size: .8rem;
+  font-weight: 600;
+  color: #15803d;
+}
+.entregador-label { flex: 1; }
+.entregador-select {
+  border: 1px solid #86efac;
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-size: .75rem;
+  font-family: inherit;
+  background: #fff;
+  color: #166534;
+  cursor: pointer;
+  max-width: 160px;
+}
+
 /* ── Ações ── */
 .card-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   padding: 8px 12px 10px;
   border-top: 1px solid var(--border);
@@ -658,7 +725,17 @@ body {
 .btn-concluir      { background: #22c55e; color: #fff; }
 .btn-entregar      { background: #a855f7; color: #fff; }
 .btn-voltar        { background: #94a3b8; color: #fff; }
-.btn-cancelar      { background: #ef4444; color: #fff; }
+.btn-cancelar      { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; flex-basis: 100%; }
+.btn-cancelar:hover { background: #fecaca; }
+
+/* ── Card cancelado ── */
+.card.cancelado {
+  opacity: .72;
+  border-color: #fca5a5 !important;
+  background: #fef2f2;
+}
+.card.cancelado .card-numero { color: #dc2626; }
+.timer-cancelado { color: #dc2626; font-size: .78rem; font-weight: 600; }
 
 /* ── Badge de status novo ── */
 .badge-new {
@@ -714,3 +791,172 @@ body {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ── Botão Novo Pedido (nav) ── */
+.nav-btn-novo {
+  background: #f97316;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: .78rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity .15s;
+  white-space: nowrap;
+  margin-left: 8px;
+}
+.nav-btn-novo:hover { opacity: .85; }
+
+/* ── Modal overlay genérico ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 1000;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 24px 16px;
+}
+.modal-overlay.open { display: flex; }
+
+.modal-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  width: 100%;
+  max-width: 460px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  margin: auto;
+}
+.modal-pedido-box { max-width: 560px; }
+
+.modal-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 18px;
+}
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.btn-modal-cancel {
+  background: #f1f5f9; color: #475569; border: none; border-radius: 8px;
+  padding: 10px 18px; font-size: .85rem; font-weight: 600; font-family: inherit; cursor: pointer;
+}
+.btn-modal-salvar {
+  background: #f97316; color: #fff; border: none; border-radius: 8px;
+  padding: 10px 18px; font-size: .85rem; font-weight: 700; font-family: inherit; cursor: pointer;
+}
+.btn-modal-salvar:hover { opacity: .88; }
+.btn-modal-cancel:hover { background: #e2e8f0; }
+
+/* ── Modal Pedido ── */
+.mp-section { margin-bottom: 16px; }
+.mp-section-title {
+  font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+  color: #64748b; margin-bottom: 10px;
+}
+.mp-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 480px) { .mp-grid-2 { grid-template-columns: 1fr; } }
+
+.mp-pizzas-lista-item {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+  padding: 8px 12px; margin-bottom: 6px; font-size: .82rem;
+}
+.mp-pizzas-lista-item strong { color: #1e293b; }
+.mp-pizzas-lista-item span   { color: #64748b; }
+.mp-btn-remover {
+  background: #fee2e2; color: #b91c1c; border: none; border-radius: 4px;
+  padding: 2px 8px; font-size: .72rem; font-weight: 700; cursor: pointer;
+}
+.mp-empty-msg { color: #94a3b8; font-size: .82rem; font-style: italic; padding: 6px 0; }
+
+.mp-pizza-form {
+  background: #f8fafc; border: 1.5px dashed #e2e8f0; border-radius: 10px;
+  padding: 16px; margin-bottom: 14px;
+}
+.mp-sabores-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px;
+  max-height: 160px; overflow-y: auto; padding: 4px;
+  border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;
+}
+.mp-sabor-cb { display: flex; align-items: center; gap: 6px; font-size: .82rem; cursor: pointer; padding: 4px 6px; border-radius: 6px; }
+.mp-sabor-cb:hover { background: #f1f5f9; }
+.mp-sabor-cb input[type=checkbox] { cursor: pointer; accent-color: #f97316; }
+
+.mp-btn-add-pizza {
+  background: #f97316; color: #fff; border: none; border-radius: 6px;
+  padding: 5px 12px; font-size: .78rem; font-weight: 700; font-family: inherit; cursor: pointer;
+}
+.mp-btn-add-pizza:hover { opacity: .85; }
+.mp-btn-cancel {
+  background: #f1f5f9; color: #475569; border: none; border-radius: 6px;
+  padding: 7px 14px; font-size: .82rem; font-weight: 600; font-family: inherit; cursor: pointer;
+}
+.mp-btn-salvar {
+  background: #22c55e; color: #fff; border: none; border-radius: 6px;
+  padding: 7px 14px; font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
+}
+
+.mp-total-row {
+  display: flex; justify-content: space-between; align-items: center;
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+  padding: 10px 14px; margin: 14px 0 10px; font-weight: 600;
+}
+.mp-total-val { font-size: 1.1rem; font-weight: 800; color: #16a34a; }
+
+/* ── Botão editar no card ── */
+.btn-editar-pedido {
+  background: #dbeafe; color: #1d4ed8; border: none; border-radius: 6px;
+  padding: 5px 10px; font-size: .75rem; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: opacity .15s;
+}
+.btn-editar-pedido:hover { opacity: .75; }
+
+.btn-imprimir {
+  background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px;
+  padding: 5px 8px; font-size: .75rem; cursor: pointer; transition: opacity .15s;
+}
+.btn-imprimir:hover { opacity: .75; }
+
+/* ── Páginas internas (não-kanban) ── */
+.page-content { max-width: 900px; margin: 0 auto; padding: 28px 20px; }
+.page-title   { font-size: 1.3rem; font-weight: 800; color: #1e293b; margin-bottom: 20px; }
+
+/* ── Formulários compartilhados ── */
+.form-field { display: flex; flex-direction: column; gap: 5px; }
+.form-field label { font-size: .78rem; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: .04em; }
+.form-field input,
+.form-field select,
+.form-field textarea {
+  border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 9px 12px;
+  font-size: .88rem; font-family: inherit; color: #1e293b; background: #fff;
+  transition: border-color .15s;
+}
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus { outline: none; border-color: #f97316; }
+.req { color: #ef4444; }
+
+.btn-enviar {
+  background: #f97316; color: #fff; border: none; border-radius: 8px;
+  padding: 10px 20px; font-size: .88rem; font-weight: 700; font-family: inherit; cursor: pointer;
+  transition: opacity .15s;
+}
+.btn-enviar:hover { opacity: .88; }
+
+.feedback-inline {
+  border-radius: 8px; padding: 9px 12px; font-size: .8rem; font-weight: 500;
+  margin-top: 10px; display: none;
+}
+.fi-err { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+.fi-ok  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }
+
+.table-empty { text-align: center; padding: 20px; color: #94a3b8; font-style: italic; }

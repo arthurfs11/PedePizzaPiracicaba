@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pede Pizza — Configurações</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ---------- Tab bar ---------- */
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid #e2e8f0;
+      margin-bottom: 24px;
+    }
+    .tab-btn {
+      padding: 12px 22px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      font-family: inherit;
+      font-size: .9rem;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+    .tab-btn.active {
+      color: #f97316;
+      border-bottom-color: #f97316;
+    }
+    .tab-btn:hover:not(.active) {
+      color: #1e293b;
+    }
+
+    /* ---------- Toggle switch ---------- */
+    .toggle-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    .toggle-wrap input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-track {
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+      background: #d1d5db;
+      border-radius: 11px;
+      transition: background .2s;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .toggle-thumb {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      transition: left .2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.25);
+    }
+    .toggle-wrap input:checked ~ .toggle-track {
+      background: #f97316;
+    }
+    .toggle-wrap input:checked ~ .toggle-track .toggle-thumb {
+      left: 21px;
+    }
+
+    /* ---------- Card ---------- */
+    .card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card h3 {
+      font-size: .95rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0 0 16px 0;
+    }
+
+    /* ---------- Form inputs ---------- */
+    .field label {
+      display: block;
+      font-size: .78rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 5px;
+    }
+    .field input[type="number"],
+    .field input[type="text"],
+    .field input[type="time"],
+    .field select {
+      padding: 8px 12px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      font-size: .9rem;
+      font-family: inherit;
+      transition: border-color .15s;
+    }
+    .field input:focus,
+    .field select:focus {
+      outline: none;
+      border-color: #f97316;
+    }
+
+    /* ---------- Buttons ---------- */
+    .btn-primary {
+      padding: 9px 22px;
+      background: #f97316;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: .88rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn-primary:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      padding: 7px 16px;
+      background: #f1f5f9;
+      color: #374151;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 7px;
+      font-weight: 600;
+      font-size: .83rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .btn-danger {
+      padding: 7px 14px;
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1.5px solid #fecaca;
+      border-radius: 7px;
+      font-weight: 600;
+      font-size: .83rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    /* ---------- Table ---------- */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+    }
+    .data-table th {
+      text-align: left;
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: #64748b;
+      padding: 0 12px 10px 12px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .data-table td {
+      padding: 11px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* ---------- Modal ---------- */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-box {
+      background: #fff;
+      border-radius: 14px;
+      padding: 28px;
+      width: 360px;
+      max-width: 94vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,.18);
+    }
+    .modal-box h3 {
+      margin: 0 0 18px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .modal-row {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    /* ---------- Toast ---------- */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      padding: 12px 22px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: .9rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,.15);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity .25s, transform .25s;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    #toast.success { background: #dcfce7; color: #15803d; }
+    #toast.error   { background: #fee2e2; color: #dc2626; }
+
+    /* ---------- Horarios grid ---------- */
+    .hor-row {
+      display: grid;
+      grid-template-columns: 120px 60px 1fr 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 0;
+      border-top: 1px solid #f1f5f9;
+    }
+    .hor-row:first-child {
+      border-top: none;
+    }
+    .hor-label {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: #64748b;
+    }
+
+    /* ---------- Preview fidelidade ---------- */
+    .preview-box {
+      background: #fff7ed;
+      border: 1.5px solid #fed7aa;
+      border-radius: 9px;
+      padding: 12px 16px;
+      font-size: .88rem;
+      color: #9a3412;
+      font-weight: 500;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-brand">
+      <span class="header-logo">🍕</span>
+      <div>
+        <h1 class="header-title">Pede Pizza Piracicaba</h1>
+        <p class="header-sub">Configurações</p>
+      </div>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <a href="/home"          class="nav-link">🏠 Início</a>
+    <a href="/"              class="nav-link">📋 Pedidos</a>
+    <a href="/relatorios"    class="nav-link">📊 Relatórios</a>
+    <a href="/suporte"       class="nav-link">🎧 Suporte</a>
+    <a href="/usuarios"      class="nav-link" id="nav-admin"    style="display:none">👥 Usuários</a>
+    <a href="/catalogo"      class="nav-link" id="nav-catalogo" style="display:none">🍕 Cardápio</a>
+    <a href="/clientes"      class="nav-link" id="nav-clientes" style="display:none">👤 Clientes</a>
+    <a href="/configuracoes" class="nav-link active" id="nav-config"      style="display:none">⚙️ Configurações</a>
+    <a href="/entregadores"  class="nav-link"        id="nav-entregadores" style="display:none">🛵 Entregadores</a>
+    <button onclick="fazerLogout()" class="nav-logout">Sair</button>
+  </nav>
+
+  <main class="page-content">
+    <h2 class="page-title">⚙️ Configurações da Loja</h2>
+
+    <!-- Tab bar -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('geral',    this)">Geral</button>
+      <button class="tab-btn"        onclick="switchTab('horarios',  this)">Horários</button>
+      <button class="tab-btn"        onclick="switchTab('entrega',   this)">Entrega</button>
+      <button class="tab-btn"        onclick="switchTab('fidelidade',this)">Fidelidade</button>
+    </div>
+
+    <!-- ===== TAB 1: Geral ===== -->
+    <div id="tab-geral">
+      <div class="card">
+        <h3>🕐 Tempo estimado de entrega</h3>
+        <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
+          <div class="field">
+            <label for="tempo-entrega">Minutos</label>
+            <input id="tempo-entrega" type="number" min="5" max="180" value="45" style="width:110px" />
+          </div>
+          <button class="btn-primary" id="btn-geral" onclick="salvarGeral()">Salvar</button>
+        </div>
+        <p style="font-size:.75rem;color:#94a3b8;margin-top:10px">Exibido no chat web e na confirmação do bot ao cliente.</p>
+      </div>
+    </div>
+
+    <!-- ===== TAB 2: Horários ===== -->
+    <div id="tab-horarios" style="display:none">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px">
+          <h3 style="margin:0">📅 Horários de funcionamento</h3>
+          <button class="btn-primary" id="btn-horarios" onclick="salvarHorarios()">Salvar horários</button>
+        </div>
+        <div style="display:grid;grid-template-columns:120px 60px 1fr 1fr;gap:10px;margin-bottom:4px;padding-bottom:8px;border-bottom:2px solid #e2e8f0">
+          <span class="hor-label">Dia</span>
+          <span class="hor-label">Aberto</span>
+          <span class="hor-label">Abre</span>
+          <span class="hor-label">Fecha</span>
+        </div>
+        <div id="horarios-grid">
+          <p style="color:#94a3b8;font-size:.85rem">Carregando...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TAB 3: Entrega ===== -->
+    <div id="tab-entrega" style="display:none">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px">
+          <h3 style="margin:0">🛵 Bairros e taxas de entrega</h3>
+          <button class="btn-primary" onclick="abrirModalBairro()">+ Adicionar bairro</button>
+        </div>
+        <div id="bairros-table-wrap">
+          <p style="color:#94a3b8;font-size:.85rem">Carregando...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TAB 4: Fidelidade ===== -->
+    <div id="tab-fidelidade" style="display:none">
+      <div class="card">
+        <h3>🎁 Programa de fidelidade</h3>
+
+        <!-- Toggle ativo -->
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
+          <label class="toggle-wrap" for="fid-ativo" style="cursor:pointer">
+            <input type="checkbox" id="fid-ativo" onchange="renderPreview()" />
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          </label>
+          <span style="font-weight:600;font-size:.9rem;color:#1e293b">Programa ativo</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px;max-width:400px">
+          <div class="field">
+            <label for="fid-pedidos">A cada quantos pedidos</label>
+            <input id="fid-pedidos" type="number" min="1" max="100" value="10" style="width:120px"
+              oninput="renderPreview()" />
+          </div>
+
+          <div class="field">
+            <label>Tipo de desconto</label>
+            <div style="display:flex;gap:20px;margin-top:6px">
+              <label style="display:flex;align-items:center;gap:7px;font-weight:500;font-size:.9rem;cursor:pointer">
+                <input type="radio" name="fid-tipo" value="percentual" id="fid-tipo-pct"
+                  onchange="renderPreview()" checked />
+                Percentual
+              </label>
+              <label style="display:flex;align-items:center;gap:7px;font-weight:500;font-size:.9rem;cursor:pointer">
+                <input type="radio" name="fid-tipo" value="fixo" id="fid-tipo-fixo"
+                  onchange="renderPreview()" />
+                Valor fixo (R$)
+              </label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="fid-valor">Valor do desconto</label>
+            <input id="fid-valor" type="number" min="0" step="0.01" value="10" style="width:120px"
+              oninput="renderPreview()" />
+          </div>
+        </div>
+
+        <div class="preview-box" id="fid-preview">
+          A cada 10 pedidos, o cliente ganha 10% de desconto.
+        </div>
+
+        <div style="margin-top:20px">
+          <button class="btn-primary" id="btn-fidelidade" onclick="salvarFidelidade()">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== Modal novo bairro ===== -->
+  <div id="modal-bairro" class="modal-backdrop" style="display:none" onclick="fecharModalBairro(event)">
+    <div class="modal-box">
+      <h3>Novo bairro</h3>
+      <div class="field" style="margin-bottom:14px">
+        <label for="m-nome">Nome do bairro</label>
+        <input id="m-nome" type="text" placeholder="Ex: Centro" style="width:100%;box-sizing:border-box" />
+      </div>
+      <div class="field">
+        <label for="m-taxa">Taxa de entrega (R$)</label>
+        <input id="m-taxa" type="number" min="0" step="0.01" placeholder="0.00" style="width:100%;box-sizing:border-box" />
+      </div>
+      <div class="modal-row">
+        <button class="btn-secondary" onclick="fecharModalBairroBtn()">Cancelar</button>
+        <button class="btn-primary" id="btn-add-bairro" onclick="adicionarBairro()">Adicionar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <script>
+    const DIAS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+    let _horarios = [];
+    let _bairros  = [];
+
+    // ─── Auth ────────────────────────────────────────────────────────────────
+    async function fazerLogout() {
+      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      window.location.href = '/login';
+    }
+
+    fetch('/api/auth/me').then(r => r.json()).then(me => {
+      if (me?.papel === 'admin' || me?.papel === 'super_admin') {
+        ['nav-admin','nav-catalogo','nav-clientes','nav-config','nav-entregadores'].forEach(id => {
+          const el = document.getElementById(id); if (el) el.style.display = '';
+        });
+      }
+      if (me?.papel !== 'admin' && me?.papel !== 'super_admin') window.location.href = '/';
+    }).catch(() => {});
+
+    // ─── Tab switching ────────────────────────────────────────────────────────
+    function switchTab(tab, btn) {
+      ['geral','horarios','entrega','fidelidade'].forEach(t => {
+        document.getElementById('tab-' + t).style.display = t === tab ? '' : 'none';
+      });
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    // ─── Toast ────────────────────────────────────────────────────────────────
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'show ' + type;
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => { t.className = ''; }, 3000);
+    }
+
+    // ─── Init: load all tabs ──────────────────────────────────────────────────
+    (async () => {
+      await Promise.all([
+        carregarGeral(),
+        carregarHorarios(),
+        carregarBairros(),
+        carregarFidelidade(),
+      ]);
+    })();
+
+    // ════════════════════════════════════════════════════════════════════════
+    // TAB 1 — GERAL
+    // ════════════════════════════════════════════════════════════════════════
+    async function carregarGeral() {
+      try {
+        const d = await fetch('/api/configuracoes/geral').then(r => r.json());
+        document.getElementById('tempo-entrega').value = d?.tempo_entrega ?? 45;
+      } catch (_) {}
+    }
+
+    async function salvarGeral() {
+      const tempo_entrega = document.getElementById('tempo-entrega').value;
+      const btn = document.getElementById('btn-geral');
+      btn.disabled = true; btn.textContent = 'Salvando...';
+      try {
+        const r = await fetch('/api/configuracoes/geral', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tempo_entrega }),
+        });
+        showToast(r.ok ? 'Configurações salvas!' : 'Erro ao salvar.', r.ok ? 'success' : 'error');
+      } catch (_) {
+        showToast('Erro ao salvar.', 'error');
+      }
+      btn.disabled = false; btn.textContent = 'Salvar';
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // TAB 2 — HORÁRIOS
+    // ════════════════════════════════════════════════════════════════════════
+    async function carregarHorarios() {
+      try {
+        _horarios = await fetch('/api/configuracoes/horarios').then(r => r.json());
+        renderHorarios();
+      } catch (_) {
+        document.getElementById('horarios-grid').innerHTML =
+          '<p style="color:#94a3b8;font-size:.85rem">Erro ao carregar horários.</p>';
+      }
+    }
+
+    function renderHorarios() {
+      const grid = document.getElementById('horarios-grid');
+      if (!_horarios || !_horarios.length) {
+        grid.innerHTML = '<p style="color:#94a3b8">Nenhum horário encontrado.</p>';
+        return;
+      }
+      grid.innerHTML = _horarios.map(h => `
+        <div class="hor-row">
+          <div style="font-weight:600;font-size:.9rem">${DIAS[h.dia]}</div>
+          <div>
+            <label class="toggle-wrap">
+              <input type="checkbox" id="ab-${h.dia}" ${h.aberto ? 'checked' : ''}
+                onchange="toggleHorario(${h.dia}, this.checked)" />
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            </label>
+          </div>
+          <div>
+            <input type="time" id="ab-h-${h.dia}" value="${h.hora_abertura || ''}"
+              ${!h.aberto ? 'disabled' : ''}
+              style="padding:6px 10px;border:1.5px solid #d1d5db;border-radius:7px;font-size:.85rem;font-family:inherit;width:100%" />
+          </div>
+          <div>
+            <input type="time" id="fc-h-${h.dia}" value="${h.hora_fechamento || ''}"
+              ${!h.aberto ? 'disabled' : ''}
+              style="padding:6px 10px;border:1.5px solid #d1d5db;border-radius:7px;font-size:.85rem;font-family:inherit;width:100%" />
+          </div>
+        </div>`).join('');
+    }
+
+    function toggleHorario(dia, aberto) {
+      const h = _horarios.find(x => x.dia === dia);
+      if (h) h.aberto = aberto ? 1 : 0;
+      const abH = document.getElementById(`ab-h-${dia}`);
+      const fcH = document.getElementById(`fc-h-${dia}`);
+      if (abH) abH.disabled = !aberto;
+      if (fcH) fcH.disabled = !aberto;
+    }
+
+    async function salvarHorarios() {
+      const payload = _horarios.map(h => ({
+        dia:             h.dia,
+        aberto:          document.getElementById(`ab-${h.dia}`).checked ? 1 : 0,
+        hora_abertura:   document.getElementById(`ab-h-${h.dia}`).value,
+        hora_fechamento: document.getElementById(`fc-h-${h.dia}`).value,
+      }));
+      const btn = document.getElementById('btn-horarios');
+      btn.disabled = true; btn.textContent = 'Salvando...';
+      try {
+        const r = await fetch('/api/configuracoes/horarios', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ horarios: payload }),
+        });
+        showToast(r.ok ? 'Horários salvos!' : 'Erro ao salvar.', r.ok ? 'success' : 'error');
+      } catch (_) {
+        showToast('Erro ao salvar.', 'error');
+      }
+      btn.disabled = false; btn.textContent = 'Salvar horários';
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // TAB 3 — ENTREGA / BAIRROS
+    // ════════════════════════════════════════════════════════════════════════
+    async function carregarBairros() {
+      try {
+        _bairros = await fetch('/api/configuracoes/bairros').then(r => r.json());
+        renderBairros();
+      } catch (_) {
+        document.getElementById('bairros-table-wrap').innerHTML =
+          '<p style="color:#94a3b8;font-size:.85rem">Erro ao carregar bairros.</p>';
+      }
+    }
+
+    function renderBairros() {
+      const wrap = document.getElementById('bairros-table-wrap');
+      if (!_bairros || !_bairros.length) {
+        wrap.innerHTML = '<p style="color:#94a3b8;font-size:.85rem">Nenhum bairro cadastrado.</p>';
+        return;
+      }
+      wrap.innerHTML = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Taxa (R$)</th>
+              <th>Ativo</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="bairros-tbody">
+            ${_bairros.map(b => renderBairroRow(b)).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    function renderBairroRow(b) {
+      return `
+        <tr id="row-${b.id}" data-id="${b.id}">
+          <td id="cell-nome-${b.id}">${escHtml(b.nome)}</td>
+          <td id="cell-taxa-${b.id}">R$ ${Number(b.taxa).toFixed(2)}</td>
+          <td id="cell-ativo-${b.id}">
+            <label class="toggle-wrap">
+              <input type="checkbox" ${b.ativo ? 'checked' : ''}
+                onchange="toggleBairroAtivo(${b.id}, this.checked)" />
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            </label>
+          </td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <button class="btn-secondary" onclick="editarBairro(${b.id})">Editar</button>
+              <button class="btn-danger"    onclick="excluirBairro(${b.id})">Excluir</button>
+            </div>
+          </td>
+        </tr>`;
+    }
+
+    function renderBairroRowEdit(b) {
+      document.getElementById('cell-nome-${b.id}');
+      const row = document.getElementById('row-' + b.id);
+      row.innerHTML = `
+        <td><input id="edit-nome-${b.id}" type="text" value="${escHtml(b.nome)}"
+          style="padding:6px 10px;border:1.5px solid #d1d5db;border-radius:7px;font-size:.88rem;font-family:inherit;width:140px" /></td>
+        <td><input id="edit-taxa-${b.id}" type="number" min="0" step="0.01" value="${b.taxa}"
+          style="padding:6px 10px;border:1.5px solid #d1d5db;border-radius:7px;font-size:.88rem;font-family:inherit;width:90px" /></td>
+        <td>
+          <label class="toggle-wrap">
+            <input type="checkbox" id="edit-ativo-${b.id}" ${b.ativo ? 'checked' : ''} />
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          </label>
+        </td>
+        <td>
+          <div style="display:flex;gap:6px">
+            <button class="btn-primary" style="font-size:.8rem;padding:6px 14px"
+              onclick="salvarEdicaoBairro(${b.id})">Salvar</button>
+            <button class="btn-secondary"
+              onclick="cancelarEdicaoBairro(${b.id})">Cancelar</button>
+          </div>
+        </td>`;
+    }
+
+    function editarBairro(id) {
+      const b = _bairros.find(x => x.id === id);
+      if (b) renderBairroRowEdit(b);
+    }
+
+    function cancelarEdicaoBairro(id) {
+      const b = _bairros.find(x => x.id === id);
+      if (!b) return;
+      const row = document.getElementById('row-' + id);
+      row.outerHTML = renderBairroRow(b);
+    }
+
+    async function salvarEdicaoBairro(id) {
+      const nome  = document.getElementById('edit-nome-'  + id).value.trim();
+      const taxa  = parseFloat(document.getElementById('edit-taxa-' + id).value) || 0;
+      const ativo = document.getElementById('edit-ativo-' + id).checked ? 1 : 0;
+      try {
+        const r = await fetch('/api/configuracoes/bairros/' + id, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome, taxa, ativo }),
+        });
+        if (r.ok) {
+          const idx = _bairros.findIndex(x => x.id === id);
+          if (idx >= 0) _bairros[idx] = { ..._bairros[idx], nome, taxa, ativo };
+          const row = document.getElementById('row-' + id);
+          row.outerHTML = renderBairroRow(_bairros[idx >= 0 ? idx : 0]);
+          showToast('Bairro atualizado!');
+        } else {
+          showToast('Erro ao atualizar bairro.', 'error');
+        }
+      } catch (_) {
+        showToast('Erro ao atualizar bairro.', 'error');
+      }
+    }
+
+    async function toggleBairroAtivo(id, ativo) {
+      const b = _bairros.find(x => x.id === id);
+      if (!b) return;
+      try {
+        const r = await fetch('/api/configuracoes/bairros/' + id, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome: b.nome, taxa: b.taxa, ativo: ativo ? 1 : 0 }),
+        });
+        if (r.ok) {
+          b.ativo = ativo ? 1 : 0;
+          showToast(ativo ? 'Bairro ativado.' : 'Bairro desativado.');
+        } else {
+          showToast('Erro ao atualizar.', 'error');
+        }
+      } catch (_) {
+        showToast('Erro ao atualizar.', 'error');
+      }
+    }
+
+    async function excluirBairro(id) {
+      if (!confirm('Excluir este bairro?')) return;
+      try {
+        const r = await fetch('/api/configuracoes/bairros/' + id, { method: 'DELETE' });
+        if (r.ok) {
+          _bairros = _bairros.filter(x => x.id !== id);
+          renderBairros();
+          showToast('Bairro excluído.');
+        } else {
+          showToast('Erro ao excluir.', 'error');
+        }
+      } catch (_) {
+        showToast('Erro ao excluir.', 'error');
+      }
+    }
+
+    function abrirModalBairro() {
+      document.getElementById('m-nome').value = '';
+      document.getElementById('m-taxa').value = '';
+      document.getElementById('modal-bairro').style.display = 'flex';
+    }
+    function fecharModalBairroBtn() {
+      document.getElementById('modal-bairro').style.display = 'none';
+    }
+    function fecharModalBairro(e) {
+      if (e.target === document.getElementById('modal-bairro')) fecharModalBairroBtn();
+    }
+
+    async function adicionarBairro() {
+      const nome = document.getElementById('m-nome').value.trim();
+      const taxa = parseFloat(document.getElementById('m-taxa').value) || 0;
+      if (!nome) { showToast('Informe o nome do bairro.', 'error'); return; }
+      const btn = document.getElementById('btn-add-bairro');
+      btn.disabled = true; btn.textContent = 'Adicionando...';
+      try {
+        const r = await fetch('/api/configuracoes/bairros', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome, taxa }),
+        });
+        if (r.ok) {
+          const novo = await r.json();
+          _bairros.push(novo);
+          renderBairros();
+          fecharModalBairroBtn();
+          showToast('Bairro adicionado!');
+        } else {
+          showToast('Erro ao adicionar bairro.', 'error');
+        }
+      } catch (_) {
+        showToast('Erro ao adicionar bairro.', 'error');
+      }
+      btn.disabled = false; btn.textContent = 'Adicionar';
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // TAB 4 — FIDELIDADE
+    // ════════════════════════════════════════════════════════════════════════
+    async function carregarFidelidade() {
+      try {
+        const d = await fetch('/api/configuracoes/fidelidade').then(r => r.json());
+        document.getElementById('fid-ativo').checked  = !!d?.ativo;
+        document.getElementById('fid-pedidos').value  = d?.pedidos ?? 10;
+        document.getElementById('fid-valor').value    = d?.desconto_valor ?? 10;
+        if (d?.desconto_tipo === 'fixo') {
+          document.getElementById('fid-tipo-fixo').checked = true;
+        } else {
+          document.getElementById('fid-tipo-pct').checked = true;
+        }
+        renderPreview();
+      } catch (_) {}
+    }
+
+    function renderPreview() {
+      const ativo    = document.getElementById('fid-ativo').checked;
+      const pedidos  = parseInt(document.getElementById('fid-pedidos').value) || 0;
+      const tipo     = document.querySelector('input[name="fid-tipo"]:checked')?.value || 'percentual';
+      const valor    = parseFloat(document.getElementById('fid-valor').value) || 0;
+      const box      = document.getElementById('fid-preview');
+      if (!ativo) {
+        box.textContent = 'Programa de fidelidade desativado.';
+        return;
+      }
+      const descStr = tipo === 'percentual'
+        ? `${valor}% de desconto`
+        : `R$ ${valor.toFixed(2)} de desconto`;
+      box.textContent = `A cada ${pedidos} pedidos, o cliente ganha ${descStr}.`;
+    }
+
+    async function salvarFidelidade() {
+      const ativo         = document.getElementById('fid-ativo').checked ? 1 : 0;
+      const pedidos       = parseInt(document.getElementById('fid-pedidos').value) || 0;
+      const desconto_tipo = document.querySelector('input[name="fid-tipo"]:checked')?.value || 'percentual';
+      const desconto_valor= parseFloat(document.getElementById('fid-valor').value) || 0;
+      const btn = document.getElementById('btn-fidelidade');
+      btn.disabled = true; btn.textContent = 'Salvando...';
+      try {
+        const r = await fetch('/api/configuracoes/fidelidade', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ativo, pedidos, desconto_tipo, desconto_valor }),
+        });
+        showToast(r.ok ? 'Fidelidade salva!' : 'Erro ao salvar.', r.ok ? 'success' : 'error');
+      } catch (_) {
+        showToast('Erro ao salvar.', 'error');
+      }
+      btn.disabled = false; btn.textContent = 'Salvar';
+    }
+
+    // ─── Helpers ─────────────────────────────────────────────────────────────
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;');
+    }
+  </script>
+</body>
+</html>

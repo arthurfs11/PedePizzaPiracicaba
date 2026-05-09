@@ -1,3 +1,5 @@
+// Objetos mutáveis — atualizarCatalogo() atualiza in-place
+// para que destructuring feito pelos módulos dependentes reflita as mudanças.
 const PIZZAS = {
   salgadas: [
     { id: 'calabresa',     nome: 'Calabresa' },
@@ -9,11 +11,11 @@ const PIZZAS = {
     { id: 'margherita',    nome: 'Margherita' },
   ],
   doces: [
-    { id: 'chocolate',     nome: 'Chocolate c/ Morango' },
-    { id: 'prestigio',     nome: 'Prestígio' },
-    { id: 'romeujulieta',  nome: 'Romeu e Julieta' },
-    { id: 'nutella',       nome: 'Nutella' },
-    { id: 'bananutella',   nome: 'Banana c/ Nutella' },
+    { id: 'chocolate',    nome: 'Chocolate c/ Morango' },
+    { id: 'prestigio',    nome: 'Prestígio' },
+    { id: 'romeujulieta', nome: 'Romeu e Julieta' },
+    { id: 'nutella',      nome: 'Nutella' },
+    { id: 'bananutella',  nome: 'Banana c/ Nutella' },
   ],
 };
 
@@ -24,9 +26,9 @@ const TAMANHOS = [
 ];
 
 const ACOMPANHAMENTOS = [
-  { id: 'ref', nome: 'Refrigerante 2L', preco: 12.00 },
-  { id: 'suc', nome: 'Suco 1L',         preco: 8.00  },
-  { id: 'nan', nome: 'Sem acompanhamento', preco: 0  },
+  { id: 'ref', nome: 'Refrigerante 2L',   preco: 12.00 },
+  { id: 'suc', nome: 'Suco 1L',           preco: 8.00  },
+  { id: 'nan', nome: 'Sem acompanhamento',preco: 0     },
 ];
 
 const BORDAS = [
@@ -35,4 +37,17 @@ const BORDAS = [
   { id: 'cheddar',     nome: 'Cheddar',      preco: 6.00 },
 ];
 
-module.exports = { PIZZAS, TAMANHOS, ACOMPANHAMENTOS, BORDAS };
+// Atualiza o catálogo em memória a partir dos dados vindos da API do dashboard.
+// Muta os arrays/objetos in-place para que módulos que fizeram destructuring
+// na importação ainda enxerguem os novos valores.
+function atualizarCatalogo(catalog) {
+  if (!catalog) return;
+  if (catalog.PIZZAS?.salgadas) PIZZAS.salgadas = catalog.PIZZAS.salgadas;
+  if (catalog.PIZZAS?.doces)    PIZZAS.doces    = catalog.PIZZAS.doces;
+  if (Array.isArray(catalog.TAMANHOS))        TAMANHOS.splice(0, TAMANHOS.length, ...catalog.TAMANHOS);
+  if (Array.isArray(catalog.BORDAS))          BORDAS.splice(0, BORDAS.length, ...catalog.BORDAS);
+  if (Array.isArray(catalog.ACOMPANHAMENTOS)) ACOMPANHAMENTOS.splice(0, ACOMPANHAMENTOS.length, ...catalog.ACOMPANHAMENTOS);
+  console.log('[BOT] Catálogo atualizado da API do dashboard.');
+}
+
+module.exports = { PIZZAS, TAMANHOS, ACOMPANHAMENTOS, BORDAS, atualizarCatalogo };

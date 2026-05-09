@@ -1,7 +1,39 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
 const { Telegraf } = require('telegraf');
+const axios        = require('axios');
 const { handleText, handleCallback } = require('./flow');
 const { kbIniciar } = require('./keyboards');
+const { atualizarCatalogo } = require('./menu');
+
+// Carrega catálogo do dashboard e re-sincroniza quando a versão muda
+const DASHBOARD_URL = process.env.DASHBOARD_URL || 'http://dashboard:8000';
+let _catalogVersion = -1;
+
+async function sincronizarCatalogo() {
+  try {
+    const { data } = await axios.get(`${DASHBOARD_URL}/api/catalogo`, { timeout: 5000 });
+    if (data?.PIZZAS && data?.TAMANHOS) atualizarCatalogo(data);
+  } catch (e) {
+    console.warn('[BOT] Catálogo: usando padrão local.', e.message);
+  }
+}
+
+async function verificarVersaoCatalogo() {
+  try {
+    const { data } = await axios.get(`${DASHBOARD_URL}/api/catalogo/version`, { timeout: 3000 });
+    const novaVersao = data?.version ?? -1;
+    if (novaVersao !== _catalogVersion) {
+      _catalogVersion = novaVersao;
+      await sincronizarCatalogo();
+      console.log(`[BOT] Catálogo sincronizado (v${novaVersao})`);
+    }
+  } catch (e) {
+    // silencioso — tenta na próxima verificação
+  }
+}
+
+sincronizarCatalogo();
+setInterval(verificarVersaoCatalogo, 30 * 1000);
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 if (!BOT_TOKEN) {

@@ -1,0 +1,46 @@
+tipo,id,nome,subtipo,fatias,preco
+# -----------------------------------------------------------------------
+# INSTRUÇÕES DE PREENCHIMENTO
+# -----------------------------------------------------------------------
+# tipo         : pizza | tamanho | borda | acompanhamento
+# id           : identificador único sem espaços (ex: calabresa, tam_g)
+#                Se deixado em branco, é gerado automaticamente do nome.
+# nome         : nome de exibição no cardápio
+# subtipo      : apenas para pizza — salgada | doce
+# fatias       : apenas para tamanho — número inteiro
+# preco        : apenas para tamanho / borda / acompanhamento — valor decimal (ex: 35.00)
+#
+# Linhas começando com # são ignoradas.
+# Dica: abra no Excel ou Google Sheets, preencha e salve como CSV (UTF-8).
+# -----------------------------------------------------------------------
+
+# PIZZAS SALGADAS
+pizza,calabresa,Calabresa,salgada,,
+pizza,mussarela,Mussarela,salgada,,
+pizza,frango,Frango c/ Catupiry,salgada,,
+pizza,portuguesa,Portuguesa,salgada,,
+pizza,quatroqueijos,Quatro Queijos,salgada,,
+pizza,pepperoni,Pepperoni,salgada,,
+pizza,margherita,Margherita,salgada,,
+
+# PIZZAS DOCES
+pizza,chocolate,Chocolate c/ Morango,doce,,
+pizza,prestigio,Prestígio,doce,,
+pizza,romeujulieta,Romeu e Julieta,doce,,
+pizza,nutella,Nutella,doce,,
+pizza,bananutella,Banana c/ Nutella,doce,,
+
+# TAMANHOS
+tamanho,m,Média,,6,35.00
+tamanho,g,Grande,,8,45.00
+tamanho,f,Família,,12,55.00
+
+# BORDAS RECHEADAS
+borda,catupiry,Catupiry,,,6.00
+borda,creamcheese,Cream Cheese,,,6.00
+borda,cheddar,Cheddar,,,6.00
+
+# ACOMPANHAMENTOS
+acompanhamento,ref,Refrigerante 2L,,,12.00
+acompanhamento,suc,Suco Natural 1L,,,8.00
+acompanhamento,nan,Sem acompanhamento,,,0.00
